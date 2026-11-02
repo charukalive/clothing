@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="600" height="800" fill="none">
+  <rect width="600" height="800" fill="#f5f0eb"/>
+  <circle cx="300" cy="360" r="120" stroke="#d6c7b2" stroke-width="2" stroke-dasharray="6 6"/>
+  <!-- Apparel Hanger Silhouette -->
+  <path d="M300 280 C290 260 310 240 320 250 C330 260 310 280 300 295 L180 370 L420 370 Z" stroke="#a89a87" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="200" y1="370" x2="200" y2="450" stroke="#a89a87" stroke-width="3" stroke-linecap="round"/>
+  <line x1="400" y1="370" x2="400" y2="450" stroke="#a89a87" stroke-width="3" stroke-linecap="round"/>
+  <!-- Typography -->
+  <text x="300" y="520" font-family="'Cinzel', serif" font-size="22" font-weight="600" letter-spacing="4" fill="#786c5e" text-anchor="middle">ARALIYA ATELIER</text>
+  <text x="300" y="550" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" letter-spacing="3" fill="#a89a87" text-anchor="middle">PHOTOGRAPHY STAGING</text>
+</svg>

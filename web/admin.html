@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Araliya Atelier • Administrator Portal</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Cinzel', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            ceylon: {
+              gold: '#b45309',
+              amber: '#d97706',
+              bg: '#faf8f5',
+              dark: '#1c1917',
+              charcoal: '#292524'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- React 18, ReactDOM & Babel CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    .min-touch {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printable-slip, #printable-slip * {
+        visibility: visible;
+      }
+      #printable-slip {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        background: white;
+      }
+    }
+  </style>
+</head>
+<body class="bg-stone-100 text-stone-800 font-sans selection:bg-amber-100 selection:text-amber-900 min-h-screen">
+  <div id="root"></div>
+
+  <!-- Admin Portal Script -->
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    const formatLKR = (amount) => {
+      const num = Number(amount) || 0;
+      return 'Rs. ' + num.toLocaleString('en-LK');
+    };
+
+    // Pre-seed realistic orders for demo and immediate out-of-the-box operation
+    const SEED_ORDERS = [
+      {
+        orderId: 'ORD-8921-LK',
+        accessToken: 'AT-KANDY77',
+        customer: {
+          name: 'Anushka Senanayake',
+          phone: '+94771234567',
+          email: 'anushka.s@gmail.com',
+          address: '42 Gregory\'s Road, Colombo 07',
+          city: 'Colombo 01-15',
+          notes: 'Please ring bell at gate, deliver after 2 PM'
+        },
+        items: [
+          {
+            id: 'PRD-CEY-001',
+            name: 'The Sigiriya Relaxed Linen Shirt',
+            price: 6500,
+            quantity: 2,
+            size: 'L',
+            colour: { name: 'Olive Grove', hex: '#4B5320' }
+          },
+          {
+            id: 'PRD-CEY-004',
+            name: 'Galle Fort Tailored Pleated Chino Pants',
+            price: 8200,
+            quantity: 1,
+            size: '34',
+            colour: { name: 'Khaki Sand', hex: '#C3B091' }
+          }
+        ],
+        subtotal: 21200,
+        deliveryFee: 0,
+        total: 21200,
+        paymentMethod: 'COD',
+        status: 'confirmed',
+        courier: 'Pronto Logistics Sri Lanka',
+        trackingNumber: 'PRN-LK-90234',
+        createdAt: new Date(Date.now() - 3600000 * 4).toISOString()
+      },
+      {
+        orderId: 'ORD-8922-LK',
+        accessToken: 'AT-GALLE99',
+        customer: {
+          name: 'Dilshan Perera',
+          phone: '+94719876543',
+          email: 'dilshan.p@outlook.com',
+          address: '18 Lighthouse Street, Galle Fort',
+          city: 'Galle',
+          notes: 'Historic gate delivery, call on arrival'
+        },
+        items: [
+          {
+            id: 'PRD-CEY-002',
+            name: 'Araliya Silk-Touch Resort Wrap Dress',
+            price: 11800,
+            quantity: 1,
+            size: 'M',
+            colour: { name: 'Emerald Palm', hex: '#1B4D3E' }
+          }
+        ],
+        subtotal: 11800,
+        deliveryFee: 0,
+        total: 11800,
+        paymentMethod: 'BankTransfer',
+        status: 'dispatched',
+        courier: 'Koombiyo Delivery Courier',
+        trackingNumber: 'KMB-GL-44129',
+        createdAt: new Date(Date.now() - 3600000 * 24).toISOString()
+      },
+      {
+        orderId: 'ORD-8923-LK',
+        accessToken: 'AT-KANDY12',
+        customer: {
+          name: 'Kavindi Jayawardena',
+          phone: '+94703344556',
+          email: 'kavindi.j@yahoo.com',
+          address: '89 Peradeniya Road, Kandy',
+          city: 'Kandy',
+          notes: 'Leave with security guard if not available'
+        },
+        items: [
+          {
+            id: 'PRD-CEY-003',
+            name: 'Bentota Heavyweight Organic Cotton Tee',
+            price: 3900,
+            quantity: 1,
+            size: 'M',
+            colour: { name: 'Chalk White', hex: '#FFFFFF' }
+          }
+        ],
+        subtotal: 3900,
+        deliveryFee: 450,
+        total: 4350,
+        paymentMethod: 'COD',
+        status: 'pending',
+        courier: 'Pronto Logistics Sri Lanka',
+        trackingNumber: '',
+        createdAt: new Date(Date.now() - 3600000 * 2).toISOString()
+      }
+    ];
+
+    function AdminApp() {
+      // Auth state (Admin PIN or Token)
+      const [isAuthenticated, setIsAuthenticated] = useState(() => {
+        return localStorage.getItem('araliya_admin_auth') === 'true';
+      });
+      const [pinInput, setPinInput] = useState('');
+      const [authError, setAuthError] = useState('');
+
+      // Active Section: 'dashboard' | 'orders' | 'inventory'
+      const [activeTab, setActiveTab] = useState('orders');
+
+      // Orders & Products
+      const [orders, setOrders] = useState([]);
+      const [products, setProducts] = useState([]);
+      const [selectedOrder, setSelectedOrder] = useState(null);
+      const [orderFilter, setOrderFilter] = useState('all');
+      const [searchQuery, setSearchQuery] = useState('');
+
+      // Status change & courier modal
+      const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+      const [modalStatus, setModalStatus] = useState('pending');
+      const [modalCourier, setModalCourier] = useState('Pronto Logistics');
+      const [modalTracking, setModalTracking] = useState('');
+
+      // Packing slip printable preview
+      const [packingSlipOrder, setPackingSlipOrder] = useState(null);
+
+      // Load data
+      const refreshData = () => {
+        // Load orders
+        const rawOrders = localStorage.getItem('araliya_orders');
+        if (!rawOrders) {
+          localStorage.setItem('araliya_orders', JSON.stringify(SEED_ORDERS));
+          setOrders(SEED_ORDERS);
+        } else {
+          try {
+            setOrders(JSON.parse(rawOrders));
+          } catch (e) {
+            setOrders(SEED_ORDERS);
+          }
+        }
+
+        // Load products
+        const rawProducts = localStorage.getItem('araliya_products');
+        if (rawProducts) {
+          try {
+            setProducts(JSON.parse(rawProducts));
+          } catch (e) {
+            setProducts([]);
+          }
+        }
+      };
+
+      useEffect(() => {
+        refreshData();
+      }, []);
+
+      // Cross-window sync with standalone Product Editor!
+      useEffect(() => {
+        const handleSync = (e) => {
+          if (e.type === 'storage' && (e.key === 'araliya_products' || e.key === 'araliya_orders')) {
+            refreshData();
+          }
+          if (e.data && (e.data.type === 'PRODUCT_SAVED' || e.data.type === 'INVENTORY_UPDATED')) {
+            refreshData();
+          }
+        };
+
+        window.addEventListener('storage', handleSync);
+        window.addEventListener('message', handleSync);
+        return () => {
+          window.removeEventListener('storage', handleSync);
+          window.removeEventListener('message', handleSync);
+        };
+      }, []);
+
+      // Metrics Calculations
+      const metrics = useMemo(() => {
+        const grossSales = orders.reduce((sum, o) => sum + (o.status !== 'cancelled' ? o.total : 0), 0);
+        const pendingCount = orders.filter(o => o.status === 'pending').length;
+        const dispatchedCount = orders.filter(o => o.status === 'dispatched').length;
+        const lowStockCount = products.filter(p => p.stock <= 5).length;
+
+        return { grossSales, pendingCount, dispatchedCount, lowStockCount };
+      }, [orders, products]);
+
+      // Filtered orders
+      const filteredOrders = useMemo(() => {
+        return orders.filter(o => {
+          const matchStatus = orderFilter === 'all' || o.status === orderFilter;
+          const matchQuery = !searchQuery ||
+            o.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (o.customer && o.customer.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (o.customer && o.customer.phone.includes(searchQuery)) ||
+            (o.customer && o.customer.city.toLowerCase().includes(searchQuery.toLowerCase()));
+          return matchStatus && matchQuery;
+        });
+      }, [orders, orderFilter, searchQuery]);
+
+      // Authentication Handler
+      const handleLogin = (e) => {
+        e.preventDefault();
+        // Support standard master PIN '1234' or 'admin'
+        if (pinInput === '1234' || pinInput === 'admin' || pinInput === 'araliya2026') {
+          setIsAuthenticated(true);
+          localStorage.setItem('araliya_admin_auth', 'true');
+          setAuthError('');
+        } else {
+          setAuthError('Invalid administrator credentials. (Hint: use 1234)');
+        }
+      };
+
+      const handleLogout = () => {
+        setIsAuthenticated(false);
+        localStorage.removeItem('araliya_admin_auth');
+      };
+
+      // Order Status Mutation
+      const saveOrderStatus = () => {
+        if (!selectedOrder) return;
+        const updated = orders.map(o => {
+          if (o.orderId === selectedOrder.orderId) {
+            return {
+              ...o,
+              status: modalStatus,
+              courier: modalCourier,
+              trackingNumber: modalTracking
+            };
+          }
+          return o;
+        });
+
+        setOrders(updated);
+        localStorage.setItem('araliya_orders', JSON.stringify(updated));
+        setIsStatusModalOpen(false);
+        setSelectedOrder(prev => ({
+          ...prev,
+          status: modalStatus,
+          courier: modalCourier,
+          trackingNumber: modalTracking
+        }));
+      };
+
+      // Toggle Product Status (Published / Draft / Archived)
+      const toggleProductPublish = (productId) => {
+        const updated = products.map(p => {
+          if (p.id === productId) {
+            return { ...p, published: !p.published };
+          }
+          return p;
+        });
+        setProducts(updated);
+        localStorage.setItem('araliya_products', JSON.stringify(updated));
+        // Update public catalog projection
+        const publicCatalog = updated.filter(p => p.published && !p.archived).map(p => {
+          const { cost, ...pub } = p;
+          return pub;
+        });
+        localStorage.setItem('araliya_public_products', JSON.stringify(publicCatalog));
+        window.dispatchEvent(new Event('storage'));
+      };
+
+      // WhatsApp Customer Dispatch Message
+      const openWhatsAppCustomer = (order) => {
+        const phone = order.customer.phone.replace(/[^0-9]/g, '');
+        const validPhone = phone.startsWith('0') ? '94' + phone.substring(1) : phone;
+
+        let statusText = '';
+        if (order.status === 'confirmed') statusText = 'is confirmed and currently being prepared by our master tailors.';
+        else if (order.status === 'packing') statusText = 'has passed final quality inspection and is packaged with eco-friendly seals.';
+        else if (order.status === 'dispatched') statusText = `has been dispatched via ${order.courier || 'Pronto Logistics'}. Waybill: ${order.trackingNumber || 'Available shortly'}.`;
+        else if (order.status === 'completed') statusText = 'has been delivered. We hope you adore your Ceylon apparel!';
+        else statusText = `is currently updated to ${order.status}.`;
+
+        const msg = encodeURIComponent(
+          `*Ayubowan ${order.customer.name}!* \n\n` +
+          `This is Araliya Atelier (Colombo 07). Your order *#${order.orderId}* ${statusText}\n\n` +
+          `• Total Amount: ${formatLKR(order.total)} (${order.paymentMethod})\n` +
+          `• Delivery City: ${order.customer.city}\n\n` +
+          `Track live status anytime at: ${window.location.origin}/index.html (Access Token: ${order.accessToken})\n\n` +
+          `Feel free to reply if you need any styling adjustments or delivery notes!`
+        );
+
+        window.open(`https://wa.me/${validPhone}?text=${msg}`, '_blank');
+      };
+
+      // Open Standalone Product Editor in separate browser tab/window!
+      const openProductEditor = (productId) => {
+        window.open(`product-editor.html?id=${productId}`, '_blank', 'width=1100,height=850');
+      };
+
+      // Print shipping slip
+      const triggerPrintPackingSlip = (order) => {
+        setPackingSlipOrder(order);
+        setTimeout(() => {
+          window.print();
+        }, 300);
+      };
+
+      // Export Orders CSV
+      const exportOrdersCSV = () => {
+        let csv = 'Order ID,Date,Customer Name,Phone,City,Total (LKR),Payment Method,Status\n';
+        orders.forEach(o => {
+          csv += `"${o.orderId}","${new Date(o.createdAt).toLocaleDateString()}","${o.customer.name}","${o.customer.phone}","${o.customer.city}","${o.total}","${o.paymentMethod}","${o.status}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `araliya-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+      };
+
+      // LOGIN FORM IF NOT AUTHENTICATED
+      if (!isAuthenticated) {
+        return (
+          <div class="min-h-screen bg-stone-900 flex items-center justify-center p-4">
+            <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-stone-800 text-center space-y-6">
+              
+              <div class="space-y-2">
+                <img src="assets/logo.svg" alt="Araliya Atelier" class="h-12 mx-auto"/>
+                <p class="text-xs uppercase tracking-widest text-amber-800 font-bold pt-2">Management &amp; Dispatch Portal</p>
+              </div>
+
+              <form onSubmit={handleLogin} class="space-y-4 pt-2">
+                <div>
+                  <label class="block text-xs font-semibold text-stone-700 text-left mb-1.5">
+                    Security Passcode / Master PIN
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={pinInput}
+                    onChange={(e) => setPinInput(e.target.value)}
+                    placeholder="Enter PIN (Default: 1234)"
+                    class="w-full p-3 rounded-xl border border-stone-300 text-sm tracking-widest text-center focus:ring-2 focus:ring-amber-800 focus:outline-none min-touch"
+                  />
+                </div>
+
+                {authError && (
+                  <p class="text-xs text-rose-600 font-medium">{authError}</p>
+                )}
+
+                <button
+                  type="submit"
+                  class="w-full inline-flex items-center justify-center bg-stone-900 hover:bg-black text-white py-3 rounded-xl text-xs font-semibold tracking-wider uppercase transition min-touch">
+                  Authenticate Staff Access
+                </button>
+              </form>
+
+              <div class="pt-4 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
+                <a href="index.html" class="hover:text-stone-900">← Back to Storefront</a>
+                <span>Sri Lanka Region</span>
+              </div>
+
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div class="min-h-screen flex flex-col">
+          
+          {/* Admin Header */}
+          <header class="bg-stone-900 text-white border-b border-stone-800 sticky top-0 z-30 shadow-md">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between gap-4">
+              
+              <div class="flex items-center space-x-4">
+                <a href="admin.html" class="flex items-center gap-2">
+                  <span class="font-serif text-lg font-bold tracking-wider text-amber-400">ARALIYA</span>
+                  <span class="text-xs text-stone-400 uppercase tracking-widest border-l border-stone-700 pl-2">Admin Portal</span>
+                </a>
+              </div>
+
+              {/* Navigation links */}
+              <div class="hidden md:flex items-center gap-1 bg-stone-800 p-1 rounded-xl">
+                <button
+                  onClick={() => setActiveTab('orders')}
+                  class={`px-4 py-2 rounded-lg text-xs font-semibold transition ${
+                    activeTab === 'orders' ? 'bg-amber-800 text-white shadow' : 'text-stone-300 hover:text-white'
+                  }`}>
+                  Order Pipeline ({orders.length})
+                </button>
+                <button
+                  onClick={() => setActiveTab('inventory')}
+                  class={`px-4 py-2 rounded-lg text-xs font-semibold transition ${
+                    activeTab === 'inventory' ? 'bg-amber-800 text-white shadow' : 'text-stone-300 hover:text-white'
+                  }`}>
+                  Product Inventory ({products.length})
+                </button>
+              </div>
+
+              {/* Action Buttons */}
+              <div class="flex items-center gap-3">
+                <button
+                  onClick={() => openProductEditor('new')}
+                  class="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white px-3.5 py-2 rounded-xl text-xs font-semibold tracking-wide transition shadow min-touch">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>New Apparel</span>
+                </button>
+
+                <a
+                  href="index.html"
+                  target="_blank"
+                  class="p-2 text-stone-300 hover:text-white rounded-lg hover:bg-stone-800 transition min-touch flex items-center justify-center"
+                  title="View Storefront">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+
+                <button
+                  onClick={handleLogout}
+                  class="p-2 text-stone-400 hover:text-rose-400 rounded-lg hover:bg-stone-800 transition min-touch flex items-center justify-center"
+                  title="Logout">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
+              </div>
+
+            </div>
+          </header>
+
+          {/* Main Dashboard Container */}
+          <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full space-y-8">
+            
+            {/* Metrics Overview Cards */}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              <div class="bg-white p-5 rounded-2xl border border-stone-200/80 shadow-sm space-y-1">
+                <span class="text-xs uppercase tracking-wider text-stone-500 font-semibold">Gross Sales</span>
+                <p class="font-serif text-2xl font-bold text-stone-900">{formatLKR(metrics.grossSales)}</p>
+                <p class="text-[11px] text-emerald-600 font-medium">Islandwide orders</p>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-stone-200/80 shadow-sm space-y-1">
+                <span class="text-xs uppercase tracking-wider text-stone-500 font-semibold">Pending Confirmations</span>
+                <p class="font-serif text-2xl font-bold text-amber-700">{metrics.pendingCount}</p>
+                <p class="text-[11px] text-stone-400 font-medium">Requires WhatsApp / Call confirmation</p>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-stone-200/80 shadow-sm space-y-1">
+                <span class="text-xs uppercase tracking-wider text-stone-500 font-semibold">Dispatched Parcels</span>
+                <p class="font-serif text-2xl font-bold text-indigo-700">{metrics.dispatchedCount}</p>
+                <p class="text-[11px] text-stone-400 font-medium">With Pronto &amp; Koombiyo Couriers</p>
+              </div>
+
+              <div class="bg-white p-5 rounded-2xl border border-stone-200/80 shadow-sm space-y-1">
+                <span class="text-xs uppercase tracking-wider text-stone-500 font-semibold">Low Stock Warnings</span>
+                <p class="font-serif text-2xl font-bold text-rose-700">{metrics.lowStockCount}</p>
+                <p class="text-[11px] text-rose-500 font-medium">≤ 5 units remaining in atelier</p>
+              </div>
+            </div>
+
+            {/* Mobile Tab Switcher */}
+            <div class="md:hidden flex rounded-xl bg-stone-200 p-1">
+              <button
+                onClick={() => setActiveTab('orders')}
+                class={`flex-1 py-2 text-xs font-semibold rounded-lg ${activeTab === 'orders' ? 'bg-white shadow' : 'text-stone-600'}`}>
+                Orders ({orders.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('inventory')}
+                class={`flex-1 py-2 text-xs font-semibold rounded-lg ${activeTab === 'inventory' ? 'bg-white shadow' : 'text-stone-600'}`}>
+                Inventory ({products.length})
+              </button>
+            </div>
+
+            {/* SECTION 1: ORDER PIPELINE MANAGEMENT */}
+            {activeTab === 'orders' && (
+              <div class="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+                
+                {/* Orders Header & Filter Controls */}
+                <div class="p-5 border-b border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h2 class="font-serif text-xl font-bold text-stone-900">Sri Lanka Order Pipeline</h2>
+                    <p class="text-xs text-stone-500">Live order processing, courier assignment, and WhatsApp dispatch</p>
+                  </div>
+
+                  <div class="flex flex-wrap items-center gap-3">
+                    {/* Status Tabs */}
+                    <div class="flex items-center gap-1 bg-stone-100 p-1 rounded-xl text-xs font-semibold">
+                      {['all', 'pending', 'confirmed', 'packing', 'dispatched', 'completed'].map(st => (
+                        <button
+                          key={st}
+                          onClick={() => setOrderFilter(st)}
+                          class={`px-3 py-1.5 rounded-lg capitalize transition ${
+                            orderFilter === st ? 'bg-white text-stone-900 shadow-sm font-bold' : 'text-stone-600 hover:text-stone-900'
+                          }`}>
+                          {st}
+                        </button>
+                      ))}
+                    </div>
+
+                    <button
+                      onClick={exportOrdersCSV}
+                      class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-stone-300 text-stone-700 hover:bg-stone-50 text-xs font-semibold transition min-touch">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      <span>Export CSV</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Orders Table */}
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs text-stone-600">
+                    <thead class="bg-stone-50 text-stone-700 uppercase tracking-wider font-semibold border-b border-stone-200">
+                      <tr>
+                        <th class="p-4">Order ID &amp; Date</th>
+                        <th class="p-4">Customer &amp; Location</th>
+                        <th class="p-4">Apparel Items</th>
+                        <th class="p-4">Total &amp; Payment</th>
+                        <th class="p-4">Status &amp; Courier</th>
+                        <th class="p-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-stone-200">
+                      {filteredOrders.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" class="p-8 text-center text-stone-400">
+                            No orders found matching this filter.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredOrders.map(order => (
+                          <tr key={order.orderId} class="hover:bg-stone-50/80 transition-colors">
+                            
+                            <td class="p-4 font-mono">
+                              <span class="font-bold text-stone-900">{order.orderId}</span>
+                              <div class="text-[11px] text-stone-400 mt-0.5">
+                                {new Date(order.createdAt).toLocaleDateString()}
+                              </div>
+                            </td>
+
+                            <td class="p-4">
+                              <div class="font-semibold text-stone-900">{order.customer.name}</div>
+                              <div class="text-stone-500 font-mono text-[11px]">{order.customer.phone}</div>
+                              <div class="text-stone-500 text-[11px]">{order.customer.city}</div>
+                            </td>
+
+                            <td class="p-4 max-w-xs">
+                              <div class="space-y-1">
+                                {order.items.map((it, i) => (
+                                  <div key={i} class="flex items-center gap-1.5 text-stone-800">
+                                    <span class="font-semibold">{it.quantity}×</span>
+                                    <span class="truncate">{it.name}</span>
+                                    <span class="bg-stone-100 px-1.5 py-0.2 rounded font-mono text-[10px] text-stone-700">{it.size}</span>
+                                    {it.colour && (
+                                      <span class="w-2.5 h-2.5 rounded-full border border-stone-300" style={{ backgroundColor: it.colour.hex }} title={it.colour.name}></span>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </td>
+
+                            <td class="p-4">
+                              <div class="font-serif font-bold text-amber-900 text-sm">
+                                {formatLKR(order.total)}
+                              </div>
+                              <span class="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-stone-100 text-stone-600">
+                                {order.paymentMethod}
+                              </span>
+                            </td>
+
+                            <td class="p-4">
+                              <span class={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                                order.status === 'confirmed' ? 'bg-blue-50 text-blue-800 border border-blue-200' :
+                                order.status === 'packing' ? 'bg-amber-50 text-amber-800 border border-amber-200' :
+                                order.status === 'dispatched' ? 'bg-purple-50 text-purple-800 border border-purple-200' :
+                                order.status === 'completed' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' :
+                                order.status === 'cancelled' ? 'bg-rose-50 text-rose-800 border border-rose-200' :
+                                'bg-stone-100 text-stone-800 border border-stone-200'
+                              }`}>
+                                {order.status}
+                              </span>
+                              {order.trackingNumber && (
+                                <div class="text-[10px] font-mono text-stone-400 mt-1">
+                                  {order.trackingNumber}
+                                </div>
+                              )}
+                            </td>
+
+                            <td class="p-4 text-right">
+                              <div class="flex items-center justify-end gap-1.5">
+                                {/* Update Status */}
+                                <button
+                                  onClick={() => {
+                                    setSelectedOrder(order);
+                                    setModalStatus(order.status);
+                                    setModalCourier(order.courier || 'Pronto Logistics');
+                                    setModalTracking(order.trackingNumber || '');
+                                    setIsStatusModalOpen(true);
+                                  }}
+                                  class="px-2.5 py-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold text-xs min-touch flex items-center justify-center"
+                                  title="Change Status">
+                                  Update
+                                </button>
+
+                                {/* WhatsApp Customer */}
+                                <button
+                                  onClick={() => openWhatsAppCustomer(order)}
+                                  class="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 min-touch flex items-center justify-center"
+                                  title="WhatsApp Customer">
+                                  <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67Z"/>
+                                  </svg>
+                                </button>
+
+                                {/* Print Packing Slip */}
+                                <button
+                                  onClick={() => triggerPrintPackingSlip(order)}
+                                  class="p-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 min-touch flex items-center justify-center"
+                                  title="Print Packing Slip">
+                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H9v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                  </svg>
+                                </button>
+                              </div>
+                            </td>
+
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+            )}
+
+            {/* SECTION 2: PRODUCT INVENTORY TABLE */}
+            {activeTab === 'inventory' && (
+              <div class="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
+                
+                <div class="p-5 border-b border-stone-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h2 class="font-serif text-xl font-bold text-stone-900">Apparel Inventory Management</h2>
+                    <p class="text-xs text-stone-500">Edit apparel details in separate editor, toggle publication, and track stock</p>
+                  </div>
+
+                  <div class="flex items-center gap-3">
+                    <button
+                      onClick={() => openProductEditor('new')}
+                      class="inline-flex items-center gap-1.5 bg-stone-900 hover:bg-black text-white px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wider uppercase transition min-touch">
+                      + Add New Product
+                    </button>
+                  </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs text-stone-600">
+                    <thead class="bg-stone-50 text-stone-700 uppercase tracking-wider font-semibold border-b border-stone-200">
+                      <tr>
+                        <th class="p-4">Apparel Item</th>
+                        <th class="p-4">Category</th>
+                        <th class="p-4">Retail Price (LKR)</th>
+                        <th class="p-4">Cost Price (LKR)</th>
+                        <th class="p-4">Stock Level</th>
+                        <th class="p-4">Sizes &amp; Swatches</th>
+                        <th class="p-4">Publication</th>
+                        <th class="p-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-stone-200">
+                      {products.map(prod => (
+                        <tr key={prod.id} class="hover:bg-stone-50/80 transition-colors">
+                          
+                          <td class="p-4">
+                            <div class="flex items-center gap-3">
+                              <img src={prod.image} alt={prod.name} class="w-12 h-14 object-cover rounded-lg bg-stone-100 border border-stone-200"/>
+                              <div>
+                                <span class="font-bold text-stone-900 block">{prod.name}</span>
+                                <span class="text-[10px] font-mono text-stone-400">{prod.id}</span>
+                              </div>
+                            </div>
+                          </td>
+
+                          <td class="p-4">
+                            <span class="bg-stone-100 px-2 py-1 rounded text-stone-700 font-medium">
+                              {prod.category}
+                            </span>
+                          </td>
+
+                          <td class="p-4 font-serif font-bold text-amber-900">
+                            {formatLKR(prod.price)}
+                          </td>
+
+                          <td class="p-4 font-mono text-stone-500">
+                            {formatLKR(prod.cost || 0)}
+                          </td>
+
+                          <td class="p-4">
+                            <span class={`font-bold ${prod.stock <= 5 ? 'text-rose-600' : 'text-stone-800'}`}>
+                              {prod.stock} units
+                            </span>
+                          </td>
+
+                          <td class="p-4">
+                            <div class="space-y-1">
+                              <div class="flex gap-1">
+                                {(prod.sizes || []).slice(0, 4).map(s => (
+                                  <span key={s} class="text-[10px] bg-stone-100 px-1 py-0.5 rounded font-mono">{s}</span>
+                                ))}
+                                {(prod.sizes || []).length > 4 && <span class="text-[10px] text-stone-400">+{(prod.sizes || []).length - 4}</span>}
+                              </div>
+                              <div class="flex gap-1 items-center pt-0.5">
+                                {(prod.colours || []).slice(0, 5).map((c, i) => (
+                                  <span key={i} class="w-2.5 h-2.5 rounded-full border border-stone-300" style={{ backgroundColor: c.hex }}></span>
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+
+                          <td class="p-4">
+                            <button
+                              onClick={() => toggleProductPublish(prod.id)}
+                              class={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition ${
+                                prod.published ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-stone-100 text-stone-500'
+                              }`}>
+                              {prod.published ? 'Published' : 'Draft'}
+                            </button>
+                          </td>
+
+                          <td class="p-4 text-right">
+                            <button
+                              onClick={() => openProductEditor(prod.id)}
+                              class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-stone-900 hover:bg-black text-white text-xs font-semibold tracking-wide transition min-touch">
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                              </svg>
+                              <span>Edit in Window</span>
+                            </button>
+                          </td>
+
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+            )}
+
+          </main>
+
+          {/* STATUS & COURIER UPDATE MODAL */}
+          {isStatusModalOpen && selectedOrder && (
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div class="bg-white rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl border border-stone-200">
+                <div class="flex items-center justify-between border-b border-stone-200 pb-3">
+                  <h3 class="font-serif text-lg font-bold text-stone-900">
+                    Update Order Status • #{selectedOrder.orderId}
+                  </h3>
+                  <button 
+                    onClick={() => setIsStatusModalOpen(false)}
+                    class="p-2 text-stone-400 hover:text-stone-700 rounded-full min-touch">
+                    ✕
+                  </button>
+                </div>
+
+                <div class="space-y-4 text-xs">
+                  <div>
+                    <label class="block font-semibold text-stone-700 mb-1">Status Lifecycle Stage</label>
+                    <select
+                      value={modalStatus}
+                      onChange={(e) => setModalStatus(e.target.value)}
+                      class="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-medium min-touch">
+                      <option value="pending">Pending Confirmation</option>
+                      <option value="confirmed">Confirmed</option>
+                      <option value="packing">Tailoring / Packing</option>
+                      <option value="dispatched">Dispatched to Courier</option>
+                      <option value="completed">Delivered &amp; Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-semibold text-stone-700 mb-1">Assigned Courier</label>
+                    <select
+                      value={modalCourier}
+                      onChange={(e) => setModalCourier(e.target.value)}
+                      class="w-full p-2.5 rounded-xl border border-stone-300 bg-white font-medium min-touch">
+                      <option value="Pronto Logistics Sri Lanka">Pronto Logistics Sri Lanka</option>
+                      <option value="Koombiyo Delivery Courier">Koombiyo Delivery Courier</option>
+                      <option value="Domex Courier Services">Domex Courier Services</option>
+                      <option value="Trans Express Ceylon">Trans Express Ceylon</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-semibold text-stone-700 mb-1">Tracking Number / Waybill ID</label>
+                    <input
+                      type="text"
+                      value={modalTracking}
+                      onChange={(e) => setModalTracking(e.target.value)}
+                      placeholder="e.g. PRN-LK-99824"
+                      class="w-full p-2.5 rounded-xl border border-stone-300 font-mono min-touch"
+                    />
+                  </div>
+                </div>
+
+                <div class="flex gap-3 pt-2">
+                  <button
+                    onClick={saveOrderStatus}
+                    class="flex-1 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white text-xs font-semibold tracking-wider uppercase min-touch">
+                    Save Status Changes
+                  </button>
+                  <button
+                    onClick={() => setIsStatusModalOpen(false)}
+                    class="px-4 py-2.5 rounded-xl border border-stone-300 text-stone-700 text-xs font-medium min-touch">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* PRINTABLE PACKING SLIP (Hidden except on Print) */}
+          {packingSlipOrder && (
+            <div id="printable-slip" class="hidden print:block text-black font-sans p-8 space-y-6">
+              <div class="flex justify-between items-start border-b-2 border-stone-800 pb-4">
+                <div>
+                  <h1 class="font-serif text-3xl font-bold tracking-wider">ARALIYA ATELIER</h1>
+                  <p class="text-xs uppercase tracking-widest text-stone-600 mt-1">Ceylon Living &amp; Contemporary Apparel • Colombo 07, Sri Lanka</p>
+                </div>
+                <div class="text-right">
+                  <p class="text-lg font-bold font-mono">PACKING SLIP / INVOICE</p>
+                  <p class="text-sm font-bold font-mono">#{packingSlipOrder.orderId}</p>
+                  <p class="text-xs text-stone-600">{new Date(packingSlipOrder.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-8 text-sm">
+                <div>
+                  <h3 class="font-bold text-xs uppercase tracking-wider text-stone-500 mb-1">Ship To Customer</h3>
+                  <p class="font-bold text-base">{packingSlipOrder.customer.name}</p>
+                  <p>{packingSlipOrder.customer.address}</p>
+                  <p>{packingSlipOrder.customer.city}, Sri Lanka</p>
+                  <p class="font-mono mt-1">Tel: {packingSlipOrder.customer.phone}</p>
+                </div>
+                <div>
+                  <h3 class="font-bold text-xs uppercase tracking-wider text-stone-500 mb-1">Dispatch Details</h3>
+                  <p><strong>Courier:</strong> {packingSlipOrder.courier || 'Pronto Logistics'}</p>
+                  <p><strong>Tracking Waybill:</strong> {packingSlipOrder.trackingNumber || 'Pending'}</p>
+                  <p><strong>Payment Method:</strong> {packingSlipOrder.paymentMethod}</p>
+                  {packingSlipOrder.customer.notes && (
+                    <p class="mt-2 text-xs italic bg-stone-100 p-2 rounded">Notes: {packingSlipOrder.customer.notes}</p>
+                  )}
+                </div>
+              </div>
+
+              <table class="w-full text-left text-sm border-t border-b border-stone-300 py-4">
+                <thead>
+                  <tr class="border-b border-stone-300">
+                    <th class="py-2">Item Description</th>
+                    <th class="py-2">Size</th>
+                    <th class="py-2">Colour</th>
+                    <th class="py-2 text-center">Qty</th>
+                    <th class="py-2 text-right">Price (LKR)</th>
+                    <th class="py-2 text-right">Total</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-stone-200">
+                  {packingSlipOrder.items.map((it, i) => (
+                    <tr key={i}>
+                      <td class="py-3 font-semibold">{it.name}</td>
+                      <td class="py-3 font-mono">{it.size}</td>
+                      <td class="py-3">{it.colour ? it.colour.name : '-'}</td>
+                      <td class="py-3 text-center font-bold">{it.quantity}</td>
+                      <td class="py-3 text-right">{formatLKR(it.price)}</td>
+                      <td class="py-3 text-right font-bold">{formatLKR(it.price * it.quantity)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div class="flex justify-end text-sm">
+                <div class="w-64 space-y-1">
+                  <div class="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>{formatLKR(packingSlipOrder.subtotal)}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Delivery Fee:</span>
+                    <span>{packingSlipOrder.deliveryFee === 0 ? 'FREE' : formatLKR(packingSlipOrder.deliveryFee)}</span>
+                  </div>
+                  <div class="flex justify-between text-base font-bold border-t border-stone-800 pt-1">
+                    <span>Amount Due ({packingSlipOrder.paymentMethod}):</span>
+                    <span>{formatLKR(packingSlipOrder.total)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="border-t border-stone-300 pt-6 text-center text-xs text-stone-500">
+                <p>Thank you for choosing Araliya Atelier Ceylon. For exchanges within 7 days, contact concierge at +94 77 982 4567.</p>
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<AdminApp />);
+  </script>
+</body>
+</html>

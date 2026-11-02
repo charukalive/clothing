@@ -1,0 +1,29 @@
+{
+  "name": "araliya-atelier-clothing",
+  "version": "1.0.0",
+  "description": "Araliya Atelier - Modern Sri Lankan Luxury Apparel E-Commerce Platform",
+  "scripts": {
+    "test:babel": "node scripts/test-babel-admin.js",
+    "test:ux": "node scripts/verify-ux-clothing.js",
+    "test": "node scripts/test-babel-admin.js && node scripts/verify-ux-clothing.js",
+    "package": "node scripts/create-desktop-package.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/charukalive/clothing.git"
+  },
+  "keywords": [
+    "clothing",
+    "sri-lanka",
+    "apparel",
+    "e-commerce",
+    "linen",
+    "react",
+    "firebase"
+  ],
+  "author": "Charuka",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/parser": "^8.1.0"
+  }
+}

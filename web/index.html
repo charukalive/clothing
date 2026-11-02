@@ -1,0 +1,1714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Araliya Atelier • Ceylon Living &amp; Apparel</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+  <!-- Typography: Cinzel for luxury serif titles & Plus Jakarta Sans for UI -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Cinzel', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            ceylon: {
+              gold: '#b45309',
+              amber: '#d97706',
+              bg: '#faf8f5',
+              dark: '#1c1917',
+              charcoal: '#292524',
+              sand: '#e7ded3',
+              terracotta: '#c45a3c',
+              olive: '#4b5320'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- React 18, ReactDOM & Babel CDN for zero-build static portability -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    /* Safe-area insets for modern mobile screens */
+    .safe-bottom {
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+    .min-touch {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    /* Smooth modal transitions */
+    .fade-enter {
+      opacity: 0;
+      transform: scale(0.97);
+    }
+    .fade-enter-active {
+      opacity: 1;
+      transform: scale(1);
+      transition: opacity 200ms, transform 200ms;
+    }
+  </style>
+</head>
+<body class="bg-[#faf8f5] text-stone-800 font-sans selection:bg-amber-100 selection:text-amber-900 min-h-screen flex flex-col">
+  <div id="root" class="flex flex-col min-h-screen"></div>
+
+  <!-- Main Storefront Application Script -->
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useRef } = React;
+
+    // Sri Lankan Currency Formatter
+    const formatLKR = (amount) => {
+      const num = Number(amount) || 0;
+      return 'Rs. ' + num.toLocaleString('en-LK');
+    };
+
+    // Store Configuration
+    const BRAND = {
+      name: 'Araliya Atelier',
+      tagline: 'Ceylon Living & Contemporary Apparel',
+      location: 'Colombo 07, Sri Lanka',
+      whatsappNumber: '94779824567',
+      whatsappDisplay: '+94 77 982 4567',
+      deliveryFeeColombo: 0,
+      deliveryFeeIslandwide: 450
+    };
+
+    // Multi-Language Support
+    const I18N = {
+      en: {
+        announcement: 'Complimentary Delivery in Colombo for Orders over Rs. 5,000 • Islandwide Courier Dispatch',
+        trackOrder: 'Track Order',
+        searchPlaceholder: 'Search linen shirts, wrap dresses, chinos...',
+        allCategories: 'All Items',
+        selectSizePrompt: 'Select Size',
+        selectColorPrompt: 'Select Colour',
+        addToCart: 'Add to Cart',
+        whatsappOrder: 'WhatsApp Order',
+        cart: 'Shopping Bag',
+        subtotal: 'Subtotal',
+        delivery: 'Delivery',
+        total: 'Estimated Total',
+        checkoutCOD: 'Checkout (Cash on Delivery / Bank Transfer)',
+        checkoutWA: '1-Click WhatsApp Direct Order',
+        inStock: 'In Stock',
+        lowStock: 'Few pieces remaining',
+        outOfStock: 'Sold Out',
+        emptyCart: 'Your shopping bag is empty',
+        continueShopping: 'Explore Collection',
+        orderSuccessTitle: 'Araliya Order Confirmed!',
+        orderSuccessSubtitle: 'Ayubowan! We have received your order.',
+        keepTokenSafe: 'Please keep your Order ID and Access Token to track your delivery status.',
+        orderId: 'Order ID',
+        accessToken: 'Access Token',
+        trackNow: 'Track Order Now',
+        close: 'Close',
+        colorLabel: 'Colour',
+        sizeLabel: 'Size',
+        material: 'Craft & Fabric'
+      },
+      si: {
+        announcement: 'රු. 5,000 ට වැඩි ඇණවුම් සඳහා කොළඹ නොමිලේ බෙදාහැරීම • මුළු දිවයිනටම කුරියර් සේවාව',
+        trackOrder: 'ඇණවුම පරික්ෂා කරන්න',
+        searchPlaceholder: 'ලිනන් ෂර්ට්, ගවුම්, කලිසම් සොයන්න...',
+        allCategories: 'සියලුම ඇඳුම්',
+        selectSizePrompt: 'ප්‍රමාණය තෝරන්න',
+        selectColorPrompt: 'වර්ණය තෝරන්න',
+        addToCart: 'බාස්කට් එකට එක් කරන්න',
+        whatsappOrder: 'WhatsApp හරහා ඇණවුම් කරන්න',
+        cart: 'සාප්පු බෑගය',
+        subtotal: 'මුළු එකතුව',
+        delivery: 'බෙදාහැරීම් ගාස්තු',
+        total: 'අවසාන එකතුව',
+        checkoutCOD: 'ඇණවුම් කරන්න (භාණ්ඩ ලැබුණු පසු මුදල් ගෙවන්න)',
+        checkoutWA: 'WhatsApp මඟින් ක්ෂණිකව ඇණවුම් කරන්න',
+        inStock: 'තොග ඇත',
+        lowStock: 'සීමිත තොගයක් ඇත',
+        outOfStock: 'තොග අවසන්',
+        emptyCart: 'ඔබේ සාප්පු බෑගය හිස්ය',
+        continueShopping: 'ඇඳුම් තෝරන්න',
+        orderSuccessTitle: 'ඇණවුම තහවුරු විය!',
+        orderSuccessSubtitle: 'ආයුබෝවන්! ඔබේ ඇණවුම සාර්ථකව අප වෙත ලැබිණි.',
+        keepTokenSafe: 'ඔබගේ ඇණවුම පරීක්ෂා කිරීමට මෙම අංක සුරක්ෂිතව තබාගන්න.',
+        orderId: 'ඇණවුම් අංකය',
+        accessToken: 'ප්‍රවේශ කේතය',
+        trackNow: 'දැන් පරික්ෂා කරන්න',
+        close: 'වසන්න',
+        colorLabel: 'වර්ණය',
+        sizeLabel: 'ප්‍රමාණය',
+        material: 'රෙදි වර්ගය'
+      },
+      ta: {
+        announcement: 'ரூ. 5,000 க்கு மேற்பட்ட ஆர்டர்களுக்கு கொழும்பில் இலவச டெலிவரி • நாடளாவிய கூரியர்',
+        trackOrder: 'ஆர்டரைக் கண்காணிக்க',
+        searchPlaceholder: 'லினன் சட்டைகள், ஆடைகள் தேடுங்கள்...',
+        allCategories: 'அனைத்து ஆடைகளும்',
+        selectSizePrompt: 'அளவைத் தேர்ந்தெடுக்கவும்',
+        selectColorPrompt: 'நிறத்தைத் தேர்ந்தெடுக்கவும்',
+        addToCart: 'பையில் சேர்க்கவும்',
+        whatsappOrder: 'WhatsApp இல் ஆர்டர் செய்யவும்',
+        cart: 'ஷாப்பிங் பை',
+        subtotal: 'கூட்டுத்தொகை',
+        delivery: 'டெலிவரி கட்டணம்',
+        total: 'மொத்தத் தொகை',
+        checkoutCOD: 'ஆர்டர் செய்யவும் (கேஷ் ஆன் டெலிவரி)',
+        checkoutWA: 'WhatsApp இல் உடனடி ஆர்டர்',
+        inStock: 'கையிருப்பில் உள்ளது',
+        lowStock: 'குறைந்த அளவு மட்டுமே உள்ளது',
+        outOfStock: 'முடிந்துவிட்டது',
+        emptyCart: 'உங்கள் பை காலியாக உள்ளது',
+        continueShopping: 'ஷாப்பிங் தொடரவும்',
+        orderSuccessTitle: 'ஆர்டர் உறுதி செய்யப்பட்டது!',
+        orderSuccessSubtitle: 'வணக்கம்! உங்கள் ஆர்டர் வெற்றிகரமாக பதிவு செய்யப்பட்டது.',
+        keepTokenSafe: 'உங்கள் ஆர்டரைக் கண்காணிக்க இந்த விவரங்களைப் பாதுகாக்கவும்.',
+        orderId: 'ஆர்டர் எண்',
+        accessToken: 'அணுகல் டோக்கன்',
+        trackNow: 'இப்போதே கண்காணிக்க',
+        close: 'மூடுக',
+        colorLabel: 'நிறம்',
+        sizeLabel: 'அளவு',
+        material: 'துணி வகை'
+      }
+    };
+
+    // Realistic Sri Lankan Apparel Products Database Seed
+    const DEFAULT_PRODUCTS = [
+      {
+        id: 'PRD-CEY-001',
+        name: 'The Sigiriya Relaxed Linen Shirt',
+        category: 'Linen & Casual',
+        price: 6500,
+        cost: 2800,
+        stock: 42,
+        description: 'Hand-crafted from 100% breathable organic Ceylon linen with natural coconut shell buttons. Designed for tropical coastal afternoons and warm Colombo evenings.',
+        image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80',
+        sizes: ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+        colours: [
+          { name: 'White Sand', hex: '#F8F9FA' },
+          { name: 'Olive Grove', hex: '#4B5320' },
+          { name: 'Ocean Slate', hex: '#3B4E61' },
+          { name: 'Ceylon Terracotta', hex: '#C45A3C' }
+        ],
+        published: true,
+        archived: false,
+        featured: true
+      },
+      {
+        id: 'PRD-CEY-002',
+        name: 'Araliya Silk-Touch Resort Wrap Dress',
+        category: 'Dresses & Silks',
+        price: 11800,
+        cost: 4900,
+        stock: 28,
+        description: 'Flowing resort silhouette with an adjustable waist tie, inspired by the botanical lushness of Peradeniya Gardens. Light, fluid drape in rich island jewel tones.',
+        image: 'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?auto=format&fit=crop&w=800&q=80',
+        sizes: ['XS', 'S', 'M', 'L', 'XL'],
+        colours: [
+          { name: 'Emerald Palm', hex: '#1B4D3E' },
+          { name: 'Sunset Gold', hex: '#D4A373' },
+          { name: 'Midnight Ceylon', hex: '#1F2421' }
+        ],
+        published: true,
+        archived: false,
+        featured: true
+      },
+      {
+        id: 'PRD-CEY-003',
+        name: 'Bentota Heavyweight Organic Cotton Tee',
+        category: 'Linen & Casual',
+        price: 3900,
+        cost: 1400,
+        stock: 65,
+        description: '240 GSM organic Sri Lankan combed cotton with dropped shoulders and a boxy contemporary streetwear fit. Pre-shrunk and durable.',
+        image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=800&q=80',
+        sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+        colours: [
+          { name: 'Chalk White', hex: '#FFFFFF' },
+          { name: 'Charcoal Black', hex: '#18181B' },
+          { name: 'Raw Sandstone', hex: '#D7C9AA' },
+          { name: 'Sage Fog', hex: '#8A9A86' }
+        ],
+        published: true,
+        archived: false,
+        featured: false
+      },
+      {
+        id: 'PRD-CEY-004',
+        name: 'Galle Fort Tailored Pleated Chino Pants',
+        category: 'Men\'s Collection',
+        price: 8200,
+        cost: 3500,
+        stock: 35,
+        description: 'Premium stretch cotton-twill with refined front pleats and side waist tab adjusters. Effortless transition from Colombo boardroom to Fort sunset dinners.',
+        image: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?auto=format&fit=crop&w=800&q=80',
+        sizes: ['28', '30', '32', '34', '36'],
+        colours: [
+          { name: 'Khaki Sand', hex: '#C3B091' },
+          { name: 'Deep Navy', hex: '#1B263B' },
+          { name: 'Olive Chino', hex: '#556B2F' },
+          { name: 'Pitch Black', hex: '#1A1A1A' }
+        ],
+        published: true,
+        archived: false,
+        featured: true
+      },
+      {
+        id: 'PRD-CEY-005',
+        name: 'Mirissa Tiered Linen Midi Sundress',
+        category: 'Women\'s Resort',
+        price: 9400,
+        cost: 3900,
+        stock: 20,
+        description: 'Tiered breezy pure linen midi dress with delicate square neckline and elasticated smocked back panel for a comfortable, flattering island silhouette.',
+        image: 'https://images.unsplash.com/photo-1515372039744-b8f02a3ae446?auto=format&fit=crop&w=800&q=80',
+        sizes: ['XS', 'S', 'M', 'L'],
+        colours: [
+          { name: 'Island Ivory', hex: '#FFFFF0' },
+          { name: 'Terracotta Clay', hex: '#B85D38' },
+          { name: 'Powder Sky', hex: '#99B4C8' }
+        ],
+        published: true,
+        archived: false,
+        featured: false
+      },
+      {
+        id: 'PRD-CEY-006',
+        name: 'Kandy Heritage Embroidered Kurta Tunic',
+        category: 'Men\'s Collection',
+        price: 7600,
+        cost: 3100,
+        stock: 18,
+        description: 'Mandarin collar tunic with subtle tone-on-tone embroidery inspired by historic Kandyan silver filigree. Crafted in pure breathable slub cotton.',
+        image: 'https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=800&q=80',
+        sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+        colours: [
+          { name: 'Linen Natural', hex: '#E6DFD5' },
+          { name: 'Navy Heritage', hex: '#1D2D44' },
+          { name: 'Forest Green', hex: '#2D4739' }
+        ],
+        published: true,
+        archived: false,
+        featured: false
+      },
+      {
+        id: 'PRD-CEY-007',
+        name: 'Horton Plains Heavyweight Oversized Hoodie',
+        category: 'Linen & Casual',
+        price: 8900,
+        cost: 3800,
+        stock: 24,
+        description: '420 GSM ultra-plush French Terry cotton fleece. Crafted for cool hill-country evenings in Nuwara Eliya and relaxed coastal airport transit.',
+        image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=800&q=80',
+        sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+        colours: [
+          { name: 'Heather Grey', hex: '#9E9E9E' },
+          { name: 'Onyx Black', hex: '#111111' },
+          { name: 'Highland Mocha', hex: '#5C4033' }
+        ],
+        published: true,
+        archived: false,
+        featured: false
+      },
+      {
+        id: 'PRD-CEY-008',
+        name: 'Handloom Artisan Market Tote & Visor Set',
+        category: 'Accessories',
+        price: 4200,
+        cost: 1600,
+        stock: 30,
+        description: 'Woven on traditional wooden handlooms by women master weavers in rural Sri Lanka. 100% biodegradable and lined with unbleached organic cotton.',
+        image: 'https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80',
+        sizes: ['Free Size'],
+        colours: [
+          { name: 'Natural Stripe', hex: '#D9C5B2' },
+          { name: 'Indigo Handloom', hex: '#2E4057' }
+        ],
+        published: true,
+        archived: false,
+        featured: false
+      }
+    ];
+
+    // Fallback Variant Resolver for Legacy/Incomplete Products
+    function resolveVariants(product) {
+      let sizes = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : [];
+      let colours = Array.isArray(product.colours) && product.colours.length > 0 ? product.colours : [];
+
+      // If sizes missing, infer from title or default to S, M, L, XL
+      if (sizes.length === 0) {
+        const title = product.name || '';
+        const sizeMatch = title.match(/\b(XS|S|M|L|XL|XXL|Free Size|\d{2})\b/i);
+        if (sizeMatch) {
+          sizes = [sizeMatch[1].toUpperCase()];
+        } else {
+          sizes = ['S', 'M', 'L', 'XL'];
+        }
+      }
+
+      // If colours missing, infer or provide classic Ceylon neutrals
+      if (colours.length === 0) {
+        colours = [
+          { name: 'White Sand', hex: '#F8F9FA' },
+          { name: 'Charcoal Black', hex: '#18181B' }
+        ];
+      }
+
+      return { sizes, colours };
+    }
+
+    // Unified Data & Storage Service (Dual Projection Architecture with Instant Local Fallback)
+    const DataService = {
+      init() {
+        const existing = localStorage.getItem('araliya_products');
+        if (!existing) {
+          localStorage.setItem('araliya_products', JSON.stringify(DEFAULT_PRODUCTS));
+          // Dual projection public catalog (excludes cost price)
+          const publicCatalog = DEFAULT_PRODUCTS.map(p => {
+            const { cost, ...pub } = p;
+            return pub;
+          });
+          localStorage.setItem('araliya_public_products', JSON.stringify(publicCatalog));
+        }
+      },
+      getPublicProducts() {
+        try {
+          const raw = localStorage.getItem('araliya_public_products') || localStorage.getItem('araliya_products');
+          const list = raw ? JSON.parse(raw) : DEFAULT_PRODUCTS;
+          return list.filter(p => p.published && !p.archived);
+        } catch (e) {
+          console.error('Failed to read products', e);
+          return DEFAULT_PRODUCTS;
+        }
+      },
+      getOrders() {
+        try {
+          const raw = localStorage.getItem('araliya_orders');
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          return [];
+        }
+      },
+      createOrder(orderData) {
+        const orders = this.getOrders();
+        orders.unshift(orderData);
+        localStorage.setItem('araliya_orders', JSON.stringify(orders));
+        window.dispatchEvent(new Event('storage'));
+        return orderData;
+      },
+      findOrder(orderId, token) {
+        const orders = this.getOrders();
+        return orders.find(o => 
+          o.orderId.toUpperCase() === (orderId || '').trim().toUpperCase() && 
+          o.accessToken === (token || '').trim()
+        );
+      }
+    };
+
+    // Initialize mock database
+    DataService.init();
+
+    // MAIN COMPONENT
+    function StorefrontApp() {
+      const [lang, setLang] = useState(() => localStorage.getItem('araliya_lang') || 'en');
+      const t = I18N[lang] || I18N.en;
+
+      // Products & Filter state
+      const [products, setProducts] = useState(() => DataService.getPublicProducts());
+      const [activeCategory, setActiveCategory] = useState('All');
+      const [searchQuery, setSearchQuery] = useState('');
+
+      // Per-card selections: { [productId]: { size: 'M', colour: { name: '...', hex: '...' } } }
+      const [cardSelections, setCardSelections] = useState({});
+
+      // Modals
+      const [isCartOpen, setIsCartOpen] = useState(false);
+      const [isTrackingOpen, setIsTrackingOpen] = useState(false);
+      const [isVariantModalOpen, setIsVariantModalOpen] = useState(false);
+      const [variantTargetProduct, setVariantTargetProduct] = useState(null);
+      const [variantTargetAction, setVariantTargetAction] = useState('cart'); // 'cart' | 'whatsapp'
+      const [modalSelectedSize, setModalSelectedSize] = useState('');
+      const [modalSelectedColor, setModalSelectedColor] = useState(null);
+
+      // Cart State
+      const [cart, setCart] = useState(() => {
+        try {
+          const saved = localStorage.getItem('araliya_cart');
+          return saved ? JSON.parse(saved) : [];
+        } catch (e) {
+          return [];
+        }
+      });
+
+      // Checkout State
+      const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+      const [checkoutForm, setCheckoutForm] = useState({
+        name: '',
+        phone: '',
+        email: '',
+        address: '',
+        city: 'Colombo',
+        notes: '',
+        paymentMethod: 'COD'
+      });
+      const [orderSuccessData, setOrderSuccessData] = useState(null);
+
+      // Tracking State
+      const [trackInputId, setTrackInputId] = useState('');
+      const [trackInputToken, setTrackInputToken] = useState('');
+      const [trackedOrder, setTrackedOrder] = useState(null);
+      const [trackError, setTrackError] = useState('');
+
+      // Save language & cart to storage
+      useEffect(() => {
+        localStorage.setItem('araliya_lang', lang);
+      }, [lang]);
+
+      useEffect(() => {
+        localStorage.setItem('araliya_cart', JSON.stringify(cart));
+      }, [cart]);
+
+      // Cross-window update listener
+      useEffect(() => {
+        const handleSync = () => {
+          setProducts(DataService.getPublicProducts());
+        };
+        window.addEventListener('storage', handleSync);
+        window.addEventListener('message', (e) => {
+          if (e.data && e.data.type === 'PRODUCT_SAVED') {
+            handleSync();
+          }
+        });
+        return () => {
+          window.removeEventListener('storage', handleSync);
+        };
+      }, []);
+
+      // Extract unique categories
+      const categories = useMemo(() => {
+        const set = new Set(['All']);
+        products.forEach(p => {
+          if (p.category) set.add(p.category);
+        });
+        return Array.from(set);
+      }, [products]);
+
+      // Filtered products list
+      const filteredProducts = useMemo(() => {
+        return products.filter(p => {
+          const matchCat = activeCategory === 'All' || p.category === activeCategory;
+          const matchSearch = !searchQuery || 
+            p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+            (p.category && p.category.toLowerCase().includes(searchQuery.toLowerCase()));
+          return matchCat && matchSearch;
+        });
+      }, [products, activeCategory, searchQuery]);
+
+      // Cart calculations
+      const cartCount = useMemo(() => {
+        return cart.reduce((sum, item) => sum + item.quantity, 0);
+      }, [cart]);
+
+      const cartSubtotal = useMemo(() => {
+        return cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      }, [cart]);
+
+      const deliveryFee = useMemo(() => {
+        if (cartSubtotal >= 10000 || cartSubtotal === 0) return 0;
+        return BRAND.deliveryFeeIslandwide;
+      }, [cartSubtotal]);
+
+      const cartTotal = cartSubtotal + deliveryFee;
+
+      // Handle card selections
+      const getSelection = (productId) => {
+        return cardSelections[productId] || {};
+      };
+
+      const setCardColor = (productId, colour) => {
+        setCardSelections(prev => ({
+          ...prev,
+          [productId]: { ...prev[productId], colour }
+        }));
+      };
+
+      const setCardSize = (productId, size) => {
+        setCardSelections(prev => ({
+          ...prev,
+          [productId]: { ...prev[productId], size }
+        }));
+      };
+
+      // Open Variant Modal when either size or color is missing
+      const triggerProductAction = (product, actionType) => {
+        const { sizes, colours } = resolveVariants(product);
+        const sel = getSelection(product.id);
+
+        const hasSize = sel.size || (sizes.length === 1 && sizes[0]);
+        const hasColor = sel.colour || (colours.length === 1 && colours[0]);
+
+        if (!hasSize || !hasColor) {
+          // Open Variant Selection Modal
+          setVariantTargetProduct(product);
+          setVariantTargetAction(actionType);
+          setModalSelectedSize(sel.size || (sizes.length === 1 ? sizes[0] : ''));
+          setModalSelectedColor(sel.colour || (colours.length === 1 ? colours[0] : null));
+          setIsVariantModalOpen(true);
+        } else {
+          // Proceed directly
+          executeAction(product, actionType, sel.size || sizes[0], sel.colour || colours[0]);
+        }
+      };
+
+      const executeAction = (product, actionType, size, colour) => {
+        if (actionType === 'cart') {
+          // Add to cart
+          addToCart(product, size, colour);
+          setIsCartOpen(true);
+        } else if (actionType === 'whatsapp') {
+          // Trigger 1-Click WhatsApp Direct Order
+          const text = encodeURIComponent(
+            `*New Order Inquiry • ${BRAND.name}*\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `• *Item:* ${product.name}\n` +
+            `• *Size:* ${size}\n` +
+            `• *Colour:* ${colour.name}\n` +
+            `• *Price:* ${formatLKR(product.price)}\n` +
+            `• *Qty:* 1\n` +
+            `━━━━━━━━━━━━━━━━━━━━━━\n` +
+            `*Total:* ${formatLKR(product.price)}\n\n` +
+            `Ayubowan! Please confirm stock availability and islandwide delivery time to my address.`
+          );
+          window.open(`https://wa.me/${BRAND.whatsappNumber}?text=${text}`, '_blank');
+        }
+      };
+
+      const confirmVariantModal = () => {
+        if (!variantTargetProduct) return;
+        const { sizes, colours } = resolveVariants(variantTargetProduct);
+        const finalSize = modalSelectedSize || sizes[0];
+        const finalColor = modalSelectedColor || colours[0];
+
+        // Save selection on card
+        setCardSelections(prev => ({
+          ...prev,
+          [variantTargetProduct.id]: { size: finalSize, colour: finalColor }
+        }));
+
+        setIsVariantModalOpen(false);
+        executeAction(variantTargetProduct, variantTargetAction, finalSize, finalColor);
+      };
+
+      // Cart management
+      const addToCart = (product, size, colour) => {
+        setCart(prev => {
+          const existingIndex = prev.findIndex(item => 
+            item.id === product.id && item.size === size && item.colour.name === colour.name
+          );
+          if (existingIndex > -1) {
+            const next = [...prev];
+            next[existingIndex].quantity += 1;
+            return next;
+          }
+          return [...prev, {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            size,
+            colour,
+            quantity: 1
+          }];
+        });
+      };
+
+      const updateCartQty = (index, delta) => {
+        setCart(prev => {
+          const next = [...prev];
+          const newQty = next[index].quantity + delta;
+          if (newQty <= 0) {
+            next.splice(index, 1);
+          } else {
+            next[index].quantity = newQty;
+          }
+          return next;
+        });
+      };
+
+      // 1-Click WhatsApp Direct Checkout from Cart
+      const triggerWhatsAppCartCheckout = () => {
+        if (cart.length === 0) return;
+        let itemsList = '';
+        cart.forEach((item, i) => {
+          itemsList += `${i + 1}. *${item.name}*\n   Size: ${item.size} | Colour: ${item.colour.name}\n   Qty: ${item.quantity} × ${formatLKR(item.price)} = ${formatLKR(item.price * item.quantity)}\n`;
+        });
+
+        const msg = encodeURIComponent(
+          `*Direct Order Request • ${BRAND.name}*\n` +
+          `━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `${itemsList}` +
+          `━━━━━━━━━━━━━━━━━━━━━━\n` +
+          `• *Subtotal:* ${formatLKR(cartSubtotal)}\n` +
+          `• *Delivery:* ${deliveryFee === 0 ? 'FREE (Special Offer)' : formatLKR(deliveryFee)}\n` +
+          `• *Grand Total:* ${formatLKR(cartTotal)}\n\n` +
+          `Ayubowan! I would like to confirm this order. Here are my delivery details:\n` +
+          `Name: \n` +
+          `Phone: \n` +
+          `Delivery Address: \n` +
+          `City / Postal Code: `
+        );
+        window.open(`https://wa.me/${BRAND.whatsappNumber}?text=${msg}`, '_blank');
+      };
+
+      // Online Cash on Delivery / Bank Transfer Form Submission
+      const handleCheckoutSubmit = (e) => {
+        e.preventDefault();
+        if (cart.length === 0) return;
+
+        // Idempotency token & order identifiers
+        const timestamp = Date.now();
+        const randId = Math.floor(1000 + Math.random() * 9000);
+        const orderId = `ORD-${timestamp.toString().slice(-4)}${randId}`;
+        const accessToken = 'AT-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+
+        const newOrder = {
+          orderId,
+          accessToken,
+          idempotencyKey: `IDEM-${timestamp}-${Math.random().toString(36).substring(2, 7)}`,
+          customer: {
+            name: checkoutForm.name,
+            phone: checkoutForm.phone,
+            email: checkoutForm.email,
+            address: checkoutForm.address,
+            city: checkoutForm.city,
+            notes: checkoutForm.notes
+          },
+          items: cart,
+          subtotal: cartSubtotal,
+          deliveryFee,
+          total: cartTotal,
+          paymentMethod: checkoutForm.paymentMethod,
+          status: 'pending', // pending -> confirmed -> packing -> dispatched -> delivered
+          courier: 'Pronto Logistics Sri Lanka',
+          trackingNumber: `PRN-LK-${randId}`,
+          createdAt: new Date().toISOString()
+        };
+
+        DataService.createOrder(newOrder);
+
+        // Clear cart & show success screen
+        setCart([]);
+        setIsCartOpen(false);
+        setIsCheckoutOpen(false);
+        setOrderSuccessData(newOrder);
+      };
+
+      // Tracking lookup
+      const handleTrackLookup = (e) => {
+        e.preventDefault();
+        setTrackError('');
+        const found = DataService.findOrder(trackInputId, trackInputToken);
+        if (found) {
+          setTrackedOrder(found);
+        } else {
+          setTrackedOrder(null);
+          setTrackError('Order not found. Please verify your Order ID (ORD-XXXX) and private Access Token.');
+        }
+      };
+
+      // 5-step status progression mapping
+      const trackingSteps = [
+        { key: 'pending', label: 'Order Placed', desc: 'Received at Colombo Atelier' },
+        { key: 'confirmed', label: 'Confirmed', desc: 'Verified & Tailoring Assigned' },
+        { key: 'packing', label: 'Packing', desc: 'Quality Check & Eco-Packaging' },
+        { key: 'dispatched', label: 'Dispatched', desc: 'Handed to Islandwide Courier' },
+        { key: 'delivered', label: 'Delivered', desc: 'Safely Arrived at Customer' }
+      ];
+
+      const getStepIndex = (status) => {
+        switch (status) {
+          case 'pending': return 0;
+          case 'confirmed': return 1;
+          case 'packing': return 2;
+          case 'dispatched': return 3;
+          case 'delivered': return 4;
+          default: return 0;
+        }
+      };
+
+      return (
+        <div class="flex-grow flex flex-col">
+          {/* Top Banner */}
+          <div class="bg-stone-900 text-stone-200 text-xs py-2 px-4 text-center font-medium tracking-wide flex items-center justify-center gap-2">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+            <span>{t.announcement}</span>
+          </div>
+
+          {/* Navigation Bar */}
+          <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-stone-200/80 transition-all">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+              
+              {/* Brand Logo */}
+              <div class="flex items-center space-x-3">
+                <a href="index.html" class="flex items-center group">
+                  <img src="assets/logo.svg" alt="Araliya Atelier" class="h-12 w-auto transition-transform group-hover:scale-[1.02]"/>
+                </a>
+              </div>
+
+              {/* Center Search Input */}
+              <div class="hidden md:flex flex-1 max-w-md mx-6 relative">
+                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" stroke-width="2"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"></line>
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder={t.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  class="w-full pl-10 pr-10 py-2.5 rounded-full bg-stone-100/80 border border-stone-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-800/20 focus:border-amber-700 transition"
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-stone-400 hover:text-stone-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <line x1="18" y1="6" x2="6" y2="18" stroke-width="2"></line>
+                      <line x1="6" y1="6" x2="18" y2="18" stroke-width="2"></line>
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {/* Right Utilities */}
+              <div class="flex items-center gap-2 sm:gap-3">
+                
+                {/* Language Switcher */}
+                <div class="relative inline-block text-left">
+                  <select 
+                    value={lang} 
+                    onChange={(e) => setLang(e.target.value)}
+                    class="bg-stone-50 border border-stone-200 text-stone-700 text-xs font-semibold rounded-full px-3 py-2 cursor-pointer focus:outline-none min-touch">
+                    <option value="en">English (EN)</option>
+                    <option value="si">සිංහල (SI)</option>
+                    <option value="ta">தமிழ் (TA)</option>
+                  </select>
+                </div>
+
+                {/* Live Order Tracking Button */}
+                <button
+                  onClick={() => { setIsTrackingOpen(true); setTrackError(''); }}
+                  class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border border-stone-300 text-stone-700 hover:bg-stone-50 text-xs font-semibold tracking-wide transition min-touch">
+                  <svg class="w-4 h-4 text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{t.trackOrder}</span>
+                </button>
+
+                {/* Admin Portal Shortcut Link */}
+                <a
+                  href="admin.html"
+                  title="Admin Portal"
+                  class="p-2.5 rounded-full text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition min-touch flex items-center justify-center">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                  </svg>
+                </a>
+
+                {/* Cart Button */}
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  class="relative inline-flex items-center gap-2 bg-stone-900 hover:bg-black text-white px-4 py-2.5 rounded-full text-xs font-semibold tracking-wider uppercase transition shadow-sm min-touch">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                  <span class="hidden sm:inline">{t.cart}</span>
+                  {cartCount > 0 && (
+                    <span class="bg-amber-600 text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full">
+                      {cartCount}
+                    </span>
+                  )}
+                </button>
+
+              </div>
+            </div>
+
+            {/* Mobile Search Bar */}
+            <div class="md:hidden px-4 pb-3">
+              <div class="relative">
+                <input
+                  type="text"
+                  placeholder={t.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  class="w-full pl-9 pr-8 py-2 rounded-full bg-stone-100 border border-stone-200 text-xs focus:outline-none"
+                />
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-stone-400">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" stroke-width="2"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"></line>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Hero Section */}
+          <section class="relative bg-[#f5efe6] border-b border-stone-200/80 overflow-hidden py-12 md:py-20 px-4 sm:px-6">
+            <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
+              <div class="max-w-xl space-y-5 text-center md:text-left">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100/80 text-amber-900 text-xs font-semibold tracking-widest uppercase">
+                  <span>Made in Sri Lanka</span>
+                  <span>•</span>
+                  <span>100% Pure Linen &amp; Handlooms</span>
+                </div>
+                <h1 class="font-serif text-3xl sm:text-5xl lg:text-6xl text-stone-900 font-semibold tracking-tight leading-tight">
+                  Island Living, <br />
+                  <span class="italic font-normal text-amber-800">Tailored Elegance</span>
+                </h1>
+                <p class="text-stone-600 text-sm sm:text-base leading-relaxed">
+                  Bespoke resort silhouettes and relaxed linen apparel designed for tropical breezes and sophisticated evenings. Handcrafted with Ceylon pride.
+                </p>
+                <div class="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-2">
+                  <a href="#catalogue" class="inline-flex items-center px-6 py-3 rounded-full bg-stone-900 hover:bg-black text-white text-xs font-semibold tracking-widest uppercase transition min-touch">
+                    Explore Catalogue
+                  </a>
+                  <button 
+                    onClick={() => { setIsTrackingOpen(true); }}
+                    class="sm:hidden inline-flex items-center px-5 py-3 rounded-full border border-stone-400 text-stone-800 text-xs font-semibold tracking-wider transition min-touch">
+                    Track Existing Order
+                  </button>
+                </div>
+              </div>
+
+              {/* Hero Image Collage */}
+              <div class="relative w-full max-w-sm sm:max-w-md">
+                <div class="aspect-[4/5] rounded-2xl overflow-hidden shadow-xl border-4 border-white bg-stone-200">
+                  <img 
+                    src="https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80" 
+                    alt="Ceylon Linen Craftsmanship"
+                    class="w-full h-full object-cover"
+                  />
+                </div>
+                <div class="absolute -bottom-4 -left-4 bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-lg border border-stone-200/80 max-w-[200px]">
+                  <p class="text-[11px] font-serif font-bold text-stone-900 uppercase tracking-wider">Araliya Atelier</p>
+                  <p class="text-[10px] text-stone-500 mt-0.5">Signature 180 GSM Pure Organic Linen</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Catalogue & Filters Section */}
+          <main id="catalogue" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex-grow w-full">
+            
+            {/* Category Pills Header */}
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+              <div>
+                <h2 class="font-serif text-2xl sm:text-3xl font-semibold text-stone-900">Apparel Catalogue</h2>
+                <p class="text-xs text-stone-500 mt-1">Showing {filteredProducts.length} handcrafted apparel designs</p>
+              </div>
+
+              {/* Category Filter Chips */}
+              <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    class={`px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition min-touch flex items-center ${
+                      activeCategory === cat
+                        ? 'bg-amber-900 text-white shadow-sm'
+                        : 'bg-white text-stone-600 border border-stone-200 hover:bg-stone-100'
+                    }`}>
+                    {cat === 'All' ? t.allCategories : cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Product Grid */}
+            {filteredProducts.length === 0 ? (
+              <div class="text-center py-20 bg-white rounded-2xl border border-stone-200 p-8">
+                <div class="w-16 h-16 mx-auto rounded-full bg-stone-100 flex items-center justify-center text-stone-400 mb-4">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" stroke-width="2"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"></line>
+                  </svg>
+                </div>
+                <h3 class="font-serif text-lg font-semibold text-stone-800">No apparel found matching your search</h3>
+                <p class="text-xs text-stone-500 mt-1 max-w-sm mx-auto">Try clearing your filters or searching for terms like "linen", "shirt", "tunic", or "pants".</p>
+                <button
+                  onClick={() => { setActiveCategory('All'); setSearchQuery(''); }}
+                  class="mt-4 px-5 py-2.5 rounded-full bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider min-touch">
+                  Clear All Filters
+                </button>
+              </div>
+            ) : (
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+                {filteredProducts.map(product => {
+                  const { sizes, colours } = resolveVariants(product);
+                  const sel = getSelection(product.id);
+                  const activeColor = sel.colour || colours[0];
+                  const activeSize = sel.size || '';
+
+                  return (
+                    <div 
+                      key={product.id}
+                      class="bg-white rounded-2xl border border-stone-200/80 overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col group">
+                      
+                      {/* Product Image Frame */}
+                      <div class="relative aspect-[3/4] bg-stone-100 overflow-hidden">
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+                          <span class="px-2.5 py-1 rounded-full bg-white/90 backdrop-blur-sm text-[10px] font-bold uppercase tracking-wider text-stone-800 shadow-sm">
+                            {product.category}
+                          </span>
+                          {product.stock <= 5 && (
+                            <span class="px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                              {t.lowStock}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Product Content Body */}
+                      <div class="p-5 flex flex-col flex-grow justify-between space-y-4">
+                        
+                        <div>
+                          <div class="flex items-baseline justify-between gap-2">
+                            <h3 class="font-serif text-base font-semibold text-stone-900 group-hover:text-amber-800 transition-colors line-clamp-1">
+                              {product.name}
+                            </h3>
+                          </div>
+                          <p class="font-serif text-base font-bold text-amber-900 mt-1">
+                            {formatLKR(product.price)}
+                          </p>
+                          <p class="text-xs text-stone-500 mt-1 line-clamp-2 leading-relaxed">
+                            {product.description}
+                          </p>
+                        </div>
+
+                        {/* Interactive Colour Swatch Dots */}
+                        <div class="space-y-1.5 pt-1 border-t border-stone-100">
+                          <div class="text-[11px] text-stone-500 flex items-center justify-between">
+                            <span>{t.colorLabel}: <strong class="text-stone-800">{activeColor.name}</strong></span>
+                          </div>
+                          <div class="flex items-center gap-2 pt-0.5">
+                            {colours.map((c, idx) => {
+                              const isSelected = activeColor.name === c.name;
+                              return (
+                                <button
+                                  key={idx}
+                                  type="button"
+                                  onClick={() => setCardColor(product.id, c)}
+                                  title={c.name}
+                                  class={`w-6 h-6 rounded-full border border-stone-300 relative transition-transform flex items-center justify-center ${
+                                    isSelected ? 'ring-2 ring-offset-1 ring-amber-800 scale-110' : 'hover:scale-105'
+                                  }`}
+                                  style={{ backgroundColor: c.hex }}>
+                                  {isSelected && (
+                                    <span class={`w-1.5 h-1.5 rounded-full ${c.hex.toLowerCase() === '#ffffff' || c.hex.toLowerCase() === '#f8f9fa' ? 'bg-stone-900' : 'bg-white'}`}></span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Clothing Size Selector */}
+                        <div class="space-y-1.5">
+                          <div class="text-[11px] text-stone-500 flex items-center justify-between">
+                            <span>{t.sizeLabel}: <strong class="text-stone-800">{activeSize || t.selectSizePrompt}</strong></span>
+                          </div>
+                          <div class="flex flex-wrap gap-1.5">
+                            {sizes.map((s) => {
+                              const isSelected = activeSize === s;
+                              return (
+                                <button
+                                  key={s}
+                                  type="button"
+                                  onClick={() => setCardSize(product.id, s)}
+                                  class={`px-2.5 py-1 text-xs rounded font-medium transition min-h-[36px] flex items-center justify-center ${
+                                    isSelected
+                                      ? 'bg-stone-900 text-white font-bold ring-1 ring-stone-900'
+                                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                                  }`}>
+                                  {s}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Dual Action Buttons */}
+                        <div class="pt-2 flex flex-col gap-2">
+                          <button
+                            type="button"
+                            onClick={() => triggerProductAction(product, 'cart')}
+                            class="w-full inline-flex items-center justify-center gap-2 bg-stone-900 hover:bg-black text-white px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wider uppercase transition min-touch">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span>{t.addToCart}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => triggerProductAction(product, 'whatsapp')}
+                            class="w-full inline-flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition min-touch">
+                            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                              <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67Z"/>
+                            </svg>
+                            <span>{t.whatsappOrder}</span>
+                          </button>
+                        </div>
+
+                      </div>
+
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+          </main>
+
+          {/* Sticky Mobile Ordering Bar */}
+          <div class="sm:hidden sticky bottom-0 z-30 bg-white/95 backdrop-blur-md border-t border-stone-200 px-4 py-3 safe-bottom shadow-lg flex items-center justify-between gap-3">
+            <div class="flex flex-col">
+              <span class="text-[10px] uppercase tracking-wider text-stone-500 font-semibold">{t.cart}</span>
+              <span class="font-serif text-sm font-bold text-stone-900">{formatLKR(cartSubtotal)}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                onClick={() => setIsCartOpen(true)}
+                class="inline-flex items-center justify-center px-4 py-2.5 rounded-full bg-stone-900 text-white text-xs font-semibold tracking-wider uppercase min-touch">
+                {t.cart} ({cartCount})
+              </button>
+              {cartCount > 0 && (
+                <button
+                  onClick={triggerWhatsAppCartCheckout}
+                  class="inline-flex items-center justify-center p-2.5 rounded-full bg-emerald-600 text-white min-touch"
+                  title="WhatsApp Checkout">
+                  <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67Z"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <footer class="bg-stone-900 text-stone-400 py-12 border-t border-stone-800 text-xs">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div class="space-y-3">
+                <h4 class="font-serif text-base text-stone-100 font-bold uppercase tracking-wider">Araliya Atelier</h4>
+                <p class="leading-relaxed text-stone-400">
+                  Ceylon Living &amp; Contemporary Apparel. Handcrafted in Colombo with sustainable pure organic linen, artisanal handlooms, and timeless island cuts.
+                </p>
+              </div>
+              <div class="space-y-2">
+                <h5 class="text-stone-200 font-semibold uppercase tracking-wider text-[11px]">Boutique &amp; Studio</h5>
+                <p>14 Guildford Crescent, Colombo 07</p>
+                <p>Western Province, Sri Lanka</p>
+                <p class="text-amber-400 font-medium pt-1">WhatsApp: {BRAND.whatsappDisplay}</p>
+              </div>
+              <div class="space-y-2">
+                <h5 class="text-stone-200 font-semibold uppercase tracking-wider text-[11px]">Customer Care</h5>
+                <p><button onClick={() => { setIsTrackingOpen(true); }} class="hover:text-amber-300">Track Parcel</button></p>
+                <p>Cash on Delivery &amp; Bank Transfer</p>
+                <p>Exchange Policy (7 Days)</p>
+                <p><a href="admin.html" class="text-stone-500 hover:text-stone-300">Admin Staff Login</a></p>
+              </div>
+              <div class="space-y-2">
+                <h5 class="text-stone-200 font-semibold uppercase tracking-wider text-[11px]">Islandwide Dispatch</h5>
+                <p>Delivered via Pronto Logistics &amp; Koombiyo Courier to all 25 districts of Sri Lanka within 2–4 business days.</p>
+              </div>
+            </div>
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pt-8 border-t border-stone-800 text-center text-[11px] text-stone-500">
+              © 2026 Araliya Atelier (Pvt) Ltd. All Rights Reserved. Handcrafted in Sri Lanka.
+            </div>
+          </footer>
+
+          {/* VARIANT SELECTION POPUP MODAL */}
+          {isVariantModalOpen && variantTargetProduct && (
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div class="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-stone-200 fade-enter-active">
+                
+                {/* Modal Header */}
+                <div class="p-4 border-b border-stone-100 flex items-center justify-between">
+                  <h3 class="font-serif text-lg font-semibold text-stone-900">
+                    Select Apparel Options
+                  </h3>
+                  <button 
+                    onClick={() => setIsVariantModalOpen(false)}
+                    class="p-2 text-stone-400 hover:text-stone-700 rounded-full min-touch flex items-center justify-center">
+                    ✕
+                  </button>
+                </div>
+
+                <div class="p-6 space-y-6">
+                  {/* Product Mini Preview */}
+                  <div class="flex gap-4 items-center">
+                    <img 
+                      src={variantTargetProduct.image} 
+                      alt={variantTargetProduct.name}
+                      class="w-20 h-24 object-cover rounded-xl bg-stone-100 border border-stone-200"
+                    />
+                    <div>
+                      <h4 class="font-serif font-semibold text-stone-900">{variantTargetProduct.name}</h4>
+                      <p class="font-serif font-bold text-amber-900 mt-0.5">{formatLKR(variantTargetProduct.price)}</p>
+                      <p class="text-xs text-stone-500 mt-1">{variantTargetProduct.category} • In Stock</p>
+                    </div>
+                  </div>
+
+                  {/* Swatch Selector */}
+                  {(() => {
+                    const { sizes, colours } = resolveVariants(variantTargetProduct);
+                    const chosenColor = modalSelectedColor || colours[0];
+
+                    return (
+                      <div class="space-y-4">
+                        <div>
+                          <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 mb-2">
+                            Select Colour: <span class="text-stone-900 font-bold">{chosenColor ? chosenColor.name : ''}</span>
+                          </label>
+                          <div class="flex items-center gap-3">
+                            {colours.map((c, i) => {
+                              const isSel = chosenColor && chosenColor.name === c.name;
+                              return (
+                                <button
+                                  key={i}
+                                  type="button"
+                                  onClick={() => setModalSelectedColor(c)}
+                                  class={`w-8 h-8 rounded-full border border-stone-300 relative transition-transform flex items-center justify-center min-touch ${
+                                    isSel ? 'ring-2 ring-offset-2 ring-amber-800 scale-110' : 'hover:scale-105'
+                                  }`}
+                                  style={{ backgroundColor: c.hex }}>
+                                  {isSel && (
+                                    <span class={`w-2 h-2 rounded-full ${c.hex.toLowerCase() === '#ffffff' || c.hex.toLowerCase() === '#f8f9fa' ? 'bg-stone-900' : 'bg-white'}`}></span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Size Selector */}
+                        <div>
+                          <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 mb-2">
+                            Select Clothing Size: <span class="text-stone-900 font-bold">{modalSelectedSize || 'Please choose'}</span>
+                          </label>
+                          <div class="grid grid-cols-4 gap-2">
+                            {sizes.map((s) => {
+                              const isSel = modalSelectedSize === s;
+                              return (
+                                <button
+                                  key={s}
+                                  type="button"
+                                  onClick={() => setModalSelectedSize(s)}
+                                  class={`py-2 text-xs rounded-xl font-semibold transition min-touch flex items-center justify-center ${
+                                    isSel
+                                      ? 'bg-stone-900 text-white shadow-sm ring-2 ring-stone-900'
+                                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                                  }`}>
+                                  {s}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* Confirm Button */}
+                  <div class="pt-2">
+                    <button
+                      type="button"
+                      onClick={confirmVariantModal}
+                      class="w-full inline-flex items-center justify-center gap-2 bg-stone-900 hover:bg-black text-white px-5 py-3 rounded-xl text-xs font-semibold tracking-wider uppercase transition shadow-sm min-touch">
+                      {variantTargetAction === 'cart' ? 'Confirm & Add to Bag' : 'Confirm & Open WhatsApp'}
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* SHOPPING BAG DRAWER */}
+          {isCartOpen && (
+            <div class="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-sm flex justify-end">
+              <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between overflow-hidden">
+                
+                {/* Drawer Header */}
+                <div class="p-5 border-b border-stone-200 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-serif text-lg font-semibold text-stone-900">{t.cart}</h3>
+                    <span class="bg-amber-100 text-amber-900 text-xs font-bold px-2 py-0.5 rounded-full">
+                      {cartCount} items
+                    </span>
+                  </div>
+                  <button 
+                    onClick={() => setIsCartOpen(false)}
+                    class="p-2 text-stone-400 hover:text-stone-700 rounded-full min-touch flex items-center justify-center">
+                    ✕
+                  </button>
+                </div>
+
+                {/* Items List */}
+                <div class="p-5 flex-grow overflow-y-auto divide-y divide-stone-100">
+                  {cart.length === 0 ? (
+                    <div class="text-center py-20 space-y-4">
+                      <div class="w-16 h-16 mx-auto rounded-full bg-stone-100 flex items-center justify-center text-stone-400">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                      </div>
+                      <p class="text-sm text-stone-500 font-medium">{t.emptyCart}</p>
+                      <button
+                        onClick={() => setIsCartOpen(false)}
+                        class="px-5 py-2.5 rounded-full bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider min-touch">
+                        {t.continueShopping}
+                      </button>
+                    </div>
+                  ) : (
+                    cart.map((item, index) => (
+                      <div key={index} class="py-4 flex gap-4 items-center">
+                        <img src={item.image} alt={item.name} class="w-16 h-20 object-cover rounded-xl bg-stone-100 border border-stone-200"/>
+                        <div class="flex-grow">
+                          <h4 class="font-serif text-sm font-semibold text-stone-900 line-clamp-1">{item.name}</h4>
+                          <p class="text-xs text-stone-500 mt-0.5">
+                            Size: <span class="font-bold text-stone-800">{item.size}</span> • 
+                            Colour: <span class="font-bold text-stone-800">{item.colour.name}</span>
+                          </p>
+                          <p class="font-serif text-xs font-bold text-amber-900 mt-1">{formatLKR(item.price)}</p>
+                          
+                          {/* Quantity selector */}
+                          <div class="flex items-center gap-2 mt-2">
+                            <button
+                              onClick={() => updateCartQty(index, -1)}
+                              class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center font-bold text-sm min-touch">
+                              -
+                            </button>
+                            <span class="text-xs font-semibold px-2">{item.quantity}</span>
+                            <button
+                              onClick={() => updateCartQty(index, 1)}
+                              class="w-7 h-7 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center font-bold text-sm min-touch">
+                              +
+                            </button>
+                          </div>
+                        </div>
+                        <div class="text-right">
+                          <p class="font-serif text-xs font-bold text-stone-900">
+                            {formatLKR(item.price * item.quantity)}
+                          </p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Drawer Footer with Two Ordering Choices */}
+                {cart.length > 0 && (
+                  <div class="p-5 border-t border-stone-200 bg-stone-50 space-y-3">
+                    <div class="space-y-1.5 text-xs">
+                      <div class="flex justify-between text-stone-600">
+                        <span>{t.subtotal}</span>
+                        <span class="font-serif font-bold text-stone-900">{formatLKR(cartSubtotal)}</span>
+                      </div>
+                      <div class="flex justify-between text-stone-600">
+                        <span>{t.delivery}</span>
+                        <span>{deliveryFee === 0 ? 'FREE' : formatLKR(deliveryFee)}</span>
+                      </div>
+                      <div class="flex justify-between text-sm font-bold text-stone-900 pt-1 border-t border-stone-200">
+                        <span>{t.total}</span>
+                        <span class="font-serif text-base text-amber-900">{formatLKR(cartTotal)}</span>
+                      </div>
+                    </div>
+
+                    <div class="pt-2 space-y-2">
+                      {/* Option A: Cash on Delivery / Bank Transfer Form */}
+                      <button
+                        onClick={() => { setIsCartOpen(false); setIsCheckoutOpen(true); }}
+                        class="w-full inline-flex items-center justify-center gap-2 bg-stone-900 hover:bg-black text-white px-4 py-3 rounded-xl text-xs font-semibold tracking-wider uppercase transition shadow min-touch">
+                        <span>{t.checkoutCOD}</span>
+                      </button>
+
+                      {/* Option B: 1-Click WhatsApp Direct Ordering */}
+                      <button
+                        onClick={triggerWhatsAppCartCheckout}
+                        class="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition shadow min-touch">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                          <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91C2.13 13.66 2.59 15.36 3.45 16.86L2.05 22L7.3 20.62C8.75 21.41 10.38 21.83 12.04 21.83C17.5 21.83 21.95 17.38 21.95 11.92C21.95 9.27 20.92 6.78 19.05 4.91C17.18 3.03 14.69 2 12.04 2M12.05 3.67C14.25 3.67 16.31 4.53 17.87 6.09C19.42 7.65 20.28 9.72 20.28 11.92C20.28 16.46 16.58 20.15 12.04 20.15C10.56 20.15 9.11 19.76 7.85 19L7.55 18.83L4.43 19.65L5.26 16.61L5.06 16.29C4.24 14.99 3.8 13.47 3.8 11.91C3.81 7.37 7.5 3.67 12.05 3.67Z"/>
+                        </svg>
+                        <span>{t.checkoutWA}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+              </div>
+            </div>
+          )}
+
+          {/* ONLINE CHECKOUT MODAL (Cash on Delivery / Bank Transfer) */}
+          {isCheckoutOpen && (
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div class="bg-white rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl border border-stone-200">
+                
+                <div class="p-5 border-b border-stone-200 flex items-center justify-between">
+                  <div>
+                    <h3 class="font-serif text-lg font-semibold text-stone-900">Sri Lankan Delivery Checkout</h3>
+                    <p class="text-xs text-stone-500">Cash on Delivery or Direct Bank Transfer</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsCheckoutOpen(false)}
+                    class="p-2 text-stone-400 hover:text-stone-700 rounded-full min-touch flex items-center justify-center">
+                    ✕
+                  </button>
+                </div>
+
+                <form onSubmit={handleCheckoutSubmit} class="p-6 space-y-4">
+                  
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-semibold text-stone-700 mb-1">Full Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={checkoutForm.name}
+                        onChange={(e) => setCheckoutForm({ ...checkoutForm, name: e.target.value })}
+                        placeholder="e.g. Charuka Wickramasinghe"
+                        class="w-full p-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 min-touch"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-stone-700 mb-1">WhatsApp / Mobile Number *</label>
+                      <input
+                        type="tel"
+                        required
+                        value={checkoutForm.phone}
+                        onChange={(e) => setCheckoutForm({ ...checkoutForm, phone: e.target.value })}
+                        placeholder="077 123 4567 or +94 77..."
+                        class="w-full p-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 min-touch"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={checkoutForm.email}
+                      onChange={(e) => setCheckoutForm({ ...checkoutForm, email: e.target.value })}
+                      placeholder="e.g. name@example.lk"
+                      class="w-full p-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 min-touch"
+                    />
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-2">
+                      <label class="block text-xs font-semibold text-stone-700 mb-1">Delivery Street Address *</label>
+                      <input
+                        type="text"
+                        required
+                        value={checkoutForm.address}
+                        onChange={(e) => setCheckoutForm({ ...checkoutForm, address: e.target.value })}
+                        placeholder="House / Apartment, Street"
+                        class="w-full p-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-amber-800/20 focus:border-amber-800 min-touch"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-stone-700 mb-1">City / District *</label>
+                      <select
+                        value={checkoutForm.city}
+                        onChange={(e) => setCheckoutForm({ ...checkoutForm, city: e.target.value })}
+                        class="w-full p-2.5 rounded-xl border border-stone-300 text-xs bg-white focus:ring-2 focus:ring-amber-800/20 min-touch">
+                        <option value="Colombo 01-15">Colombo 01-15</option>
+                        <option value="Colombo Suburbs">Colombo Suburbs</option>
+                        <option value="Kandy">Kandy</option>
+                        <option value="Galle">Galle</option>
+                        <option value="Negombo">Negombo</option>
+                        <option value="Gampaha">Gampaha</option>
+                        <option value="Kurunegala">Kurunegala</option>
+                        <option value="Matara">Matara</option>
+                        <option value="Jaffna">Jaffna</option>
+                        <option value="Other Districts">Other Districts</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Payment Method</label>
+                    <div class="grid grid-cols-2 gap-3">
+                      <label class={`p-3 rounded-xl border cursor-pointer text-xs flex items-center gap-2 ${
+                        checkoutForm.paymentMethod === 'COD' ? 'border-amber-800 bg-amber-50/50 text-stone-900 font-semibold' : 'border-stone-200 text-stone-600'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="COD"
+                          checked={checkoutForm.paymentMethod === 'COD'}
+                          onChange={() => setCheckoutForm({ ...checkoutForm, paymentMethod: 'COD' })}
+                        />
+                        <span>Cash on Delivery (COD)</span>
+                      </label>
+
+                      <label class={`p-3 rounded-xl border cursor-pointer text-xs flex items-center gap-2 ${
+                        checkoutForm.paymentMethod === 'BankTransfer' ? 'border-amber-800 bg-amber-50/50 text-stone-900 font-semibold' : 'border-stone-200 text-stone-600'
+                      }`}>
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="BankTransfer"
+                          checked={checkoutForm.paymentMethod === 'BankTransfer'}
+                          onChange={() => setCheckoutForm({ ...checkoutForm, paymentMethod: 'BankTransfer' })}
+                        />
+                        <span>Direct Bank Transfer</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Special Delivery Notes</label>
+                    <textarea
+                      rows="2"
+                      value={checkoutForm.notes}
+                      onChange={(e) => setCheckoutForm({ ...checkoutForm, notes: e.target.value })}
+                      placeholder="e.g. Call before delivery, landmark near temple..."
+                      class="w-full p-2.5 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-amber-800/20"
+                    ></textarea>
+                  </div>
+
+                  {/* Summary Box */}
+                  <div class="bg-stone-50 p-4 rounded-xl border border-stone-200 flex justify-between items-center text-xs">
+                    <div>
+                      <span class="text-stone-500">Order Total ({cartCount} items):</span>
+                      <p class="font-serif text-lg font-bold text-amber-900">{formatLKR(cartTotal)}</p>
+                    </div>
+                    <span class="text-[11px] text-stone-500">Free courier insurance</span>
+                  </div>
+
+                  <div class="pt-2">
+                    <button
+                      type="submit"
+                      class="w-full inline-flex items-center justify-center gap-2 bg-stone-900 hover:bg-black text-white px-5 py-3 rounded-xl text-xs font-semibold tracking-wider uppercase transition shadow min-touch">
+                      Confirm &amp; Place Order ({formatLKR(cartTotal)})
+                    </button>
+                  </div>
+
+                </form>
+
+              </div>
+            </div>
+          )}
+
+          {/* ORDER SUCCESS MODAL */}
+          {orderSuccessData && (
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div class="bg-white rounded-2xl max-w-lg w-full p-6 text-center space-y-5 shadow-2xl border border-stone-200">
+                
+                <div class="w-16 h-16 mx-auto rounded-full bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+
+                <div class="space-y-1">
+                  <h3 class="font-serif text-2xl font-bold text-stone-900">{t.orderSuccessTitle}</h3>
+                  <p class="text-xs text-stone-600">{t.orderSuccessSubtitle}</p>
+                </div>
+
+                <div class="bg-stone-50 border border-stone-200 p-4 rounded-xl text-left space-y-2 text-xs">
+                  <p class="text-[11px] text-stone-500">{t.keepTokenSafe}</p>
+                  <div class="flex justify-between items-center py-1 border-b border-stone-200">
+                    <span class="font-semibold text-stone-600">{t.orderId}:</span>
+                    <span class="font-mono font-bold text-stone-900 bg-white px-2 py-0.5 rounded border">{orderSuccessData.orderId}</span>
+                  </div>
+                  <div class="flex justify-between items-center py-1">
+                    <span class="font-semibold text-stone-600">{t.accessToken}:</span>
+                    <span class="font-mono font-bold text-amber-800 bg-white px-2 py-0.5 rounded border">{orderSuccessData.accessToken}</span>
+                  </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      setTrackInputId(orderSuccessData.orderId);
+                      setTrackInputToken(orderSuccessData.accessToken);
+                      setTrackedOrder(orderSuccessData);
+                      setOrderSuccessData(null);
+                      setIsTrackingOpen(true);
+                    }}
+                    class="flex-1 inline-flex items-center justify-center px-4 py-3 rounded-xl bg-stone-900 text-white text-xs font-semibold tracking-wider uppercase min-touch">
+                    {t.trackNow}
+                  </button>
+                  <button
+                    onClick={() => setOrderSuccessData(null)}
+                    class="px-5 py-3 rounded-xl border border-stone-300 text-stone-700 text-xs font-medium hover:bg-stone-50 min-touch">
+                    {t.close}
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+          {/* LIVE ORDER TRACKING MODAL */}
+          {isTrackingOpen && (
+            <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+              <div class="bg-white rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl border border-stone-200">
+                
+                <div class="p-5 border-b border-stone-200 flex items-center justify-between">
+                  <div>
+                    <h3 class="font-serif text-lg font-semibold text-stone-900">Live Parcel Tracking</h3>
+                    <p class="text-xs text-stone-500">Track your Colombo Atelier tailoring &amp; courier dispatch</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsTrackingOpen(false)}
+                    class="p-2 text-stone-400 hover:text-stone-700 rounded-full min-touch flex items-center justify-center">
+                    ✕
+                  </button>
+                </div>
+
+                <div class="p-6 space-y-6">
+                  {/* Tracking Search Form */}
+                  <form onSubmit={handleTrackLookup} class="space-y-3">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label class="block text-[11px] font-semibold text-stone-600 mb-1">Order ID</label>
+                        <input
+                          type="text"
+                          required
+                          value={trackInputId}
+                          onChange={(e) => setTrackInputId(e.target.value)}
+                          placeholder="ORD-XXXX"
+                          class="w-full p-2.5 rounded-xl border border-stone-300 text-xs font-mono uppercase focus:ring-2 focus:ring-amber-800/20 min-touch"
+                        />
+                      </div>
+                      <div>
+                        <label class="block text-[11px] font-semibold text-stone-600 mb-1">Access Token</label>
+                        <input
+                          type="text"
+                          required
+                          value={trackInputToken}
+                          onChange={(e) => setTrackInputToken(e.target.value)}
+                          placeholder="AT-XXXX"
+                          class="w-full p-2.5 rounded-xl border border-stone-300 text-xs font-mono uppercase focus:ring-2 focus:ring-amber-800/20 min-touch"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      class="w-full inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-stone-900 text-white text-xs font-semibold tracking-wider uppercase hover:bg-black transition min-touch">
+                      Verify &amp; Locate Parcel
+                    </button>
+                  </form>
+
+                  {trackError && (
+                    <div class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs">
+                      {trackError}
+                    </div>
+                  )}
+
+                  {/* 5-Step Visual Stepper */}
+                  {trackedOrder && (
+                    <div class="space-y-6 pt-2 border-t border-stone-100">
+                      
+                      <div class="bg-stone-50 p-4 rounded-xl border border-stone-200 text-xs flex justify-between items-center">
+                        <div>
+                          <p class="font-bold text-stone-900">{trackedOrder.orderId}</p>
+                          <p class="text-stone-500 mt-0.5">Courier: {trackedOrder.courier || 'Pronto Logistics'}</p>
+                          {trackedOrder.trackingNumber && (
+                            <p class="text-stone-500 font-mono text-[11px]">Waybill: {trackedOrder.trackingNumber}</p>
+                          )}
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold uppercase tracking-wider">
+                          Status: {trackedOrder.status}
+                        </span>
+                      </div>
+
+                      {/* Visual Stepper */}
+                      <div class="py-2">
+                        <div class="relative flex items-center justify-between">
+                          <div class="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-stone-200 w-full z-0"></div>
+                          <div 
+                            class="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-amber-800 z-0 transition-all duration-500"
+                            style={{ width: `${(getStepIndex(trackedOrder.status) / 4) * 100}%` }}></div>
+                          
+                          {trackingSteps.map((step, idx) => {
+                            const isCurrent = getStepIndex(trackedOrder.status) === idx;
+                            const isPassed = getStepIndex(trackedOrder.status) >= idx;
+
+                            return (
+                              <div key={step.key} class="relative z-10 flex flex-col items-center">
+                                <div class={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold transition-all ${
+                                  isPassed ? 'bg-amber-800 text-white shadow-sm ring-2 ring-amber-800/30' : 'bg-stone-200 text-stone-500'
+                                }`}>
+                                  {idx + 1}
+                                </div>
+                                <span class={`text-[10px] mt-2 font-semibold text-center whitespace-nowrap ${
+                                  isCurrent ? 'text-amber-900 font-bold' : isPassed ? 'text-stone-800' : 'text-stone-400'
+                                }`}>
+                                  {step.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Order items review */}
+                      <div class="border-t border-stone-100 pt-3 space-y-2">
+                        <h4 class="text-xs font-semibold text-stone-700">Order Items:</h4>
+                        {trackedOrder.items && trackedOrder.items.map((it, i) => (
+                          <div key={i} class="flex justify-between text-xs text-stone-600">
+                            <span>{it.name} ({it.size} / {it.colour ? it.colour.name : ''}) × {it.quantity}</span>
+                            <span class="font-serif font-semibold">{formatLKR(it.price * it.quantity)}</span>
+                          </div>
+                        ))}
+                        <div class="flex justify-between text-xs font-bold text-stone-900 pt-2 border-t border-stone-200">
+                          <span>Grand Total</span>
+                          <span class="font-serif text-amber-900">{formatLKR(trackedOrder.total)}</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+
+                </div>
+
+              </div>
+            </div>
+          )}
+
+        </div>
+      );
+    }
+
+    // Render Storefront
+    ReactDOM.createRoot(document.getElementById('root')).render(<StorefrontApp />);
+  </script>
+</body>
+</html>

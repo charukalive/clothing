@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Araliya Atelier • Apparel Product Studio</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['Cinzel', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            ceylon: {
+              gold: '#b45309',
+              amber: '#d97706',
+              bg: '#faf8f5',
+              dark: '#1c1917',
+              charcoal: '#292524'
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- React 18, ReactDOM & Babel CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    .min-touch {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  </style>
+</head>
+<body class="bg-[#faf8f5] text-stone-800 font-sans selection:bg-amber-100 selection:text-amber-900 min-h-screen">
+  <div id="root"></div>
+
+  <!-- Standalone Product Editor Script -->
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const PRESET_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free Size', '28', '30', '32', '34', '36'];
+    const PRESET_COLOURS = [
+      { name: 'White Sand', hex: '#F8F9FA' },
+      { name: 'Olive Grove', hex: '#4B5320' },
+      { name: 'Ocean Slate', hex: '#3B4E61' },
+      { name: 'Ceylon Terracotta', hex: '#C45A3C' },
+      { name: 'Chalk White', hex: '#FFFFFF' },
+      { name: 'Charcoal Black', hex: '#18181B' },
+      { name: 'Emerald Palm', hex: '#1B4D3E' },
+      { name: 'Sunset Gold', hex: '#D4A373' },
+      { name: 'Deep Navy', hex: '#1B263B' },
+      { name: 'Khaki Sand', hex: '#C3B091' }
+    ];
+
+    const formatLKR = (amount) => {
+      const num = Number(amount) || 0;
+      return 'Rs. ' + num.toLocaleString('en-LK');
+    };
+
+    function ProductEditorApp() {
+      // Parse query param ?id=
+      const urlParams = new URLSearchParams(window.location.search);
+      const productIdParam = urlParams.get('id') || 'new';
+
+      const [isDirty, setIsDirty] = useState(false);
+      const [saveNotice, setSaveNotice] = useState('');
+      const [customSizeInput, setCustomSizeInput] = useState('');
+      const [customColorName, setCustomColorName] = useState('');
+      const [customColorHex, setCustomColorHex] = useState('#b45309');
+
+      // Product Form State
+      const [product, setProduct] = useState({
+        id: productIdParam === 'new' ? `PRD-CEY-${Math.floor(100 + Math.random() * 900)}` : productIdParam,
+        name: '',
+        category: 'Linen & Casual',
+        price: 6500,
+        cost: 2800,
+        stock: 25,
+        description: '',
+        image: 'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?auto=format&fit=crop&w=800&q=80',
+        sizes: ['S', 'M', 'L', 'XL'],
+        colours: [
+          { name: 'White Sand', hex: '#F8F9FA' },
+          { name: 'Olive Grove', hex: '#4B5320' }
+        ],
+        published: true,
+        archived: false,
+        featured: false
+      });
+
+      // Load existing product if editing
+      useEffect(() => {
+        if (productIdParam !== 'new') {
+          try {
+            const raw = localStorage.getItem('araliya_products');
+            if (raw) {
+              const list = JSON.parse(raw);
+              const found = list.find(p => p.id === productIdParam);
+              if (found) {
+                setProduct({
+                  ...found,
+                  sizes: Array.isArray(found.sizes) ? found.sizes : ['S', 'M', 'L'],
+                  colours: Array.isArray(found.colours) ? found.colours : [{ name: 'White Sand', hex: '#F8F9FA' }]
+                });
+              }
+            }
+          } catch (e) {
+            console.error('Failed to read existing product', e);
+          }
+        }
+      }, [productIdParam]);
+
+      // Warn before unload if changes are unsaved
+      useEffect(() => {
+        const handleBeforeUnload = (e) => {
+          if (isDirty) {
+            e.preventDefault();
+            e.returnValue = 'You have unsaved changes in this apparel product. Are you sure you want to exit?';
+            return e.returnValue;
+          }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+      }, [isDirty]);
+
+      const updateField = (field, value) => {
+        setIsDirty(true);
+        setProduct(prev => ({ ...prev, [field]: value }));
+      };
+
+      // Toggle Size
+      const toggleSize = (size) => {
+        setIsDirty(true);
+        setProduct(prev => {
+          const current = [...prev.sizes];
+          const idx = current.indexOf(size);
+          if (idx > -1) {
+            current.splice(idx, 1);
+          } else {
+            current.push(size);
+          }
+          return { ...prev, sizes: current };
+        });
+      };
+
+      // Add Custom Size Tag
+      const addCustomSize = (e) => {
+        e.preventDefault();
+        const trimmed = customSizeInput.trim().toUpperCase();
+        if (trimmed && !product.sizes.includes(trimmed)) {
+          setIsDirty(true);
+          setProduct(prev => ({
+            ...prev,
+            sizes: [...prev.sizes, trimmed]
+          }));
+          setCustomSizeInput('');
+        }
+      };
+
+      // Toggle Colour
+      const toggleColor = (c) => {
+        setIsDirty(true);
+        setProduct(prev => {
+          const current = [...prev.colours];
+          const idx = current.findIndex(col => col.name === c.name);
+          if (idx > -1) {
+            current.splice(idx, 1);
+          } else {
+            current.push(c);
+          }
+          return { ...prev, colours: current };
+        });
+      };
+
+      // Add Custom Colour Tag
+      const addCustomColor = (e) => {
+        e.preventDefault();
+        const trimmed = customColorName.trim();
+        if (trimmed && !product.colours.some(c => c.name.toLowerCase() === trimmed.toLowerCase())) {
+          setIsDirty(true);
+          setProduct(prev => ({
+            ...prev,
+            colours: [...prev.colours, { name: trimmed, hex: customColorHex }]
+          }));
+          setCustomColorName('');
+        }
+      };
+
+      // Image upload / file picker
+      const handleImageFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          if (file.size > 5 * 1024 * 1024) {
+            alert('Image exceeds 5MB size limit. Please choose a smaller photo.');
+            return;
+          }
+          const reader = new FileReader();
+          reader.onload = (uploadEvent) => {
+            updateField('image', uploadEvent.target.result);
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+
+      // Save product (Dual Projection: writes private products & public publicProducts)
+      const saveProduct = (andClose = false) => {
+        try {
+          const raw = localStorage.getItem('araliya_products') || '[]';
+          let list = JSON.parse(raw);
+          const index = list.findIndex(p => p.id === product.id);
+
+          const fullProduct = {
+            ...product,
+            price: Number(product.price) || 0,
+            cost: Number(product.cost) || 0,
+            stock: Number(product.stock) || 0,
+            updatedAt: new Date().toISOString()
+          };
+
+          if (index > -1) {
+            list[index] = fullProduct;
+          } else {
+            list.unshift(fullProduct);
+          }
+
+          // 1. Private Store
+          localStorage.setItem('araliya_products', JSON.stringify(list));
+
+          // 2. Dual-Projection Public Store (strips cost and internal fields)
+          const publicCatalog = list.filter(p => p.published && !p.archived).map(p => {
+            const { cost, ...pub } = p;
+            return pub;
+          });
+          localStorage.setItem('araliya_public_products', JSON.stringify(publicCatalog));
+
+          // 3. Cross-window notification
+          if (window.opener) {
+            try {
+              window.opener.postMessage({ type: 'PRODUCT_SAVED', productId: fullProduct.id }, '*');
+            } catch (err) {
+              console.warn('Could not postMessage to opener', err);
+            }
+          }
+          window.dispatchEvent(new Event('storage'));
+
+          setIsDirty(false);
+          setSaveNotice('Apparel saved and published successfully!');
+          setTimeout(() => setSaveNotice(''), 4000);
+
+          if (andClose) {
+            window.close();
+          }
+        } catch (err) {
+          console.error('Failed to save product', err);
+          alert('Error saving product: ' + err.message);
+        }
+      };
+
+      const profit = Math.max(0, (product.price || 0) - (product.cost || 0));
+      const marginPct = product.price > 0 ? Math.round((profit / product.price) * 100) : 0;
+
+      return (
+        <div class="min-h-screen flex flex-col">
+          
+          {/* Top Bar */}
+          <header class="bg-stone-900 text-white border-b border-stone-800 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 h-18 py-3 flex items-center justify-between gap-4">
+              <div class="flex items-center space-x-3">
+                <span class="font-serif text-lg font-bold text-amber-400">ARALIYA</span>
+                <span class="text-xs uppercase tracking-widest text-stone-400 border-l border-stone-700 pl-3">
+                  Apparel Studio • {productIdParam === 'new' ? 'New Creation' : product.id}
+                </span>
+                {isDirty && (
+                  <span class="text-[11px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-semibold">
+                    Unsaved Edits
+                  </span>
+                )}
+              </div>
+
+              <div class="flex items-center gap-3">
+                {saveNotice && (
+                  <span class="text-xs text-emerald-400 font-semibold bg-emerald-900/30 px-3 py-1 rounded-full border border-emerald-700/50">
+                    {saveNotice}
+                  </span>
+                )}
+
+                <button
+                  onClick={() => saveProduct(false)}
+                  class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-white text-xs font-semibold tracking-wide transition border border-stone-700 min-touch">
+                  Save Changes
+                </button>
+
+                <button
+                  onClick={() => saveProduct(true)}
+                  class="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold tracking-wide transition shadow min-touch">
+                  Save &amp; Close Window
+                </button>
+              </div>
+            </div>
+          </header>
+
+          {/* Main 2-Column Studio Workspace */}
+          <main class="max-w-7xl mx-auto px-4 sm:px-6 py-8 flex-grow w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            {/* Left Column: Form Controls (7 cols) */}
+            <div class="lg:col-span-7 space-y-6">
+              
+              {/* Core Details Card */}
+              <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-4">
+                <h3 class="font-serif text-base font-bold text-stone-900">Apparel Information</h3>
+                
+                <div>
+                  <label class="block text-xs font-semibold text-stone-700 mb-1">Product Title *</label>
+                  <input
+                    type="text"
+                    required
+                    value={product.name}
+                    onChange={(e) => updateField('name', e.target.value)}
+                    placeholder="e.g. The Sigiriya Relaxed Linen Shirt"
+                    class="w-full p-3 rounded-xl border border-stone-300 text-sm focus:ring-2 focus:ring-amber-800 min-touch"
+                  />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Category</label>
+                    <select
+                      value={product.category}
+                      onChange={(e) => updateField('category', e.target.value)}
+                      class="w-full p-3 rounded-xl border border-stone-300 bg-white text-xs font-medium min-touch">
+                      <option value="Linen & Casual">Linen &amp; Casual</option>
+                      <option value="Dresses & Silks">Dresses &amp; Silks</option>
+                      <option value="Men's Collection">Men's Collection</option>
+                      <option value="Women's Resort">Women's Resort</option>
+                      <option value="Accessories">Accessories</option>
+                      <option value="Custom Tailored">Custom Tailored</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">SKU / Product ID</label>
+                    <input
+                      type="text"
+                      value={product.id}
+                      onChange={(e) => updateField('id', e.target.value)}
+                      class="w-full p-3 rounded-xl border border-stone-300 font-mono text-xs uppercase min-touch"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-stone-700 mb-1">Fabric &amp; Craftsmanship Story</label>
+                  <textarea
+                    rows="3"
+                    value={product.description}
+                    onChange={(e) => updateField('description', e.target.value)}
+                    placeholder="Describe material (e.g. 100% Pure Ceylon Organic Linen, 180 GSM, Coconut Shell Buttons, hand-finished in Colombo)..."
+                    class="w-full p-3 rounded-xl border border-stone-300 text-xs focus:ring-2 focus:ring-amber-800 leading-relaxed"
+                  ></textarea>
+                </div>
+              </div>
+
+              {/* Pricing & Stock Levels */}
+              <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-4">
+                <h3 class="font-serif text-base font-bold text-stone-900">Pricing &amp; Atelier Inventory</h3>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Retail Price (LKR) *</label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-3.5 text-xs text-stone-400 font-semibold">Rs.</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={product.price}
+                        onChange={(e) => updateField('price', Number(e.target.value))}
+                        class="w-full pl-9 pr-3 py-3 rounded-xl border border-stone-300 text-sm font-bold text-amber-900 min-touch"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Cost Price (LKR) [Private]</label>
+                    <div class="relative">
+                      <span class="absolute left-3 top-3.5 text-xs text-stone-400 font-semibold">Rs.</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={product.cost}
+                        onChange={(e) => updateField('cost', Number(e.target.value))}
+                        class="w-full pl-9 pr-3 py-3 rounded-xl border border-stone-300 text-sm font-medium text-stone-600 min-touch"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Stock Count</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={product.stock}
+                      onChange={(e) => updateField('stock', Number(e.target.value))}
+                      class="w-full p-3 rounded-xl border border-stone-300 text-sm font-bold min-touch"
+                    />
+                  </div>
+                </div>
+
+                <div class="p-3 bg-amber-50/70 rounded-xl border border-amber-200/70 flex justify-between items-center text-xs">
+                  <span class="text-amber-900 font-medium">Estimated Gross Profit Margin:</span>
+                  <span class="font-bold text-amber-950">{formatLKR(profit)} ({marginPct}%)</span>
+                </div>
+              </div>
+
+              {/* Clothing Sizes Management */}
+              <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-4">
+                <div class="flex justify-between items-center">
+                  <h3 class="font-serif text-base font-bold text-stone-900">Apparel Sizes</h3>
+                  <span class="text-xs text-stone-500">{product.sizes.length} active sizes</span>
+                </div>
+
+                {/* Preset Chips */}
+                <div class="flex flex-wrap gap-2">
+                  {PRESET_SIZES.map(s => {
+                    const isSel = product.sizes.includes(s);
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => toggleSize(s)}
+                        class={`px-3 py-1.5 rounded-lg text-xs font-bold transition min-touch flex items-center gap-1 ${
+                          isSel
+                            ? 'bg-stone-900 text-white shadow-sm ring-2 ring-stone-900'
+                            : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                        }`}>
+                        <span>{s}</span>
+                        {isSel && <span>✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Size Tag Input */}
+                <form onSubmit={addCustomSize} class="flex gap-2 pt-2">
+                  <input
+                    type="text"
+                    value={customSizeInput}
+                    onChange={(e) => setCustomSizeInput(e.target.value)}
+                    placeholder="Add custom size (e.g. 38, UK 10, Petite)"
+                    class="flex-grow p-2.5 rounded-xl border border-stone-300 text-xs min-touch"
+                  />
+                  <button
+                    type="submit"
+                    class="px-4 py-2.5 rounded-xl bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider min-touch">
+                    + Add Size
+                  </button>
+                </form>
+              </div>
+
+              {/* Colour Swatch Palette Management */}
+              <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-4">
+                <div class="flex justify-between items-center">
+                  <h3 class="font-serif text-base font-bold text-stone-900">Colour Swatches</h3>
+                  <span class="text-xs text-stone-500">{product.colours.length} active colours</span>
+                </div>
+
+                {/* Preset Colour Swatches */}
+                <div class="flex flex-wrap gap-2.5">
+                  {PRESET_COLOURS.map(c => {
+                    const isSel = product.colours.some(col => col.name === c.name);
+                    return (
+                      <button
+                        key={c.name}
+                        type="button"
+                        onClick={() => toggleColor(c)}
+                        class={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-semibold transition min-touch ${
+                          isSel
+                            ? 'border-amber-800 bg-amber-50/60 ring-2 ring-amber-800/40 text-stone-900'
+                            : 'border-stone-200 bg-white text-stone-600 hover:bg-stone-50'
+                        }`}>
+                        <span class="w-4 h-4 rounded-full border border-stone-300" style={{ backgroundColor: c.hex }}></span>
+                        <span>{c.name}</span>
+                        {isSel && <span class="text-amber-800">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Custom Colour Tag Input */}
+                <form onSubmit={addCustomColor} class="flex flex-wrap sm:flex-nowrap gap-2 pt-2 items-center">
+                  <input
+                    type="color"
+                    value={customColorHex}
+                    onChange={(e) => setCustomColorHex(e.target.value)}
+                    class="w-11 h-11 p-1 rounded-xl border border-stone-300 cursor-pointer min-touch"
+                  />
+                  <input
+                    type="text"
+                    value={customColorName}
+                    onChange={(e) => setCustomColorName(e.target.value)}
+                    placeholder="Custom Colour Name (e.g. Ceylon Cinnamon)"
+                    class="flex-grow p-2.5 rounded-xl border border-stone-300 text-xs min-touch"
+                  />
+                  <button
+                    type="submit"
+                    class="px-4 py-2.5 rounded-xl bg-stone-900 text-white text-xs font-semibold uppercase tracking-wider min-touch">
+                    + Add Swatch
+                  </button>
+                </form>
+              </div>
+
+              {/* Publication Status & Safety */}
+              <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-3">
+                <h3 class="font-serif text-base font-bold text-stone-900">Visibility &amp; Safety Controls</h3>
+                
+                <div class="flex items-center gap-6">
+                  <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold">
+                    <input
+                      type="checkbox"
+                      checked={product.published}
+                      onChange={(e) => updateField('published', e.target.checked)}
+                      class="w-4 h-4 text-amber-800 rounded border-stone-300 focus:ring-amber-800"
+                    />
+                    <span>Publish on Live Storefront (`publicProducts`)</span>
+                  </label>
+
+                  <label class="flex items-center gap-2 cursor-pointer text-xs font-semibold text-stone-500">
+                    <input
+                      type="checkbox"
+                      checked={product.archived}
+                      onChange={(e) => updateField('archived', e.target.checked)}
+                      class="w-4 h-4 text-stone-800 rounded border-stone-300 focus:ring-stone-800"
+                    />
+                    <span>Archive Product (Hide from catalog)</span>
+                  </label>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Right Column: Live Storefront Preview & Image Upload (5 cols) */}
+            <div class="lg:col-span-5 space-y-6">
+              
+              {/* Image Upload Box */}
+              <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-4">
+                <h3 class="font-serif text-base font-bold text-stone-900">Apparel Photography</h3>
+                
+                <div class="space-y-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Image URL</label>
+                    <input
+                      type="url"
+                      value={product.image}
+                      onChange={(e) => updateField('image', e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      class="w-full p-2.5 rounded-xl border border-stone-300 text-xs min-touch font-mono"
+                    />
+                  </div>
+
+                  <div class="border-t border-stone-100 pt-3">
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Upload Photo from Device</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      class="block w-full text-xs text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-stone-900 file:text-white hover:file:bg-black cursor-pointer"
+                    />
+                    <p class="text-[10px] text-stone-400 mt-1">JPEG/PNG/WebP up to 5MB.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Real-Time Live Preview Card on Storefront */}
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold uppercase tracking-wider text-stone-500">Live Storefront Card Preview</span>
+                  <span class="text-[10px] bg-stone-200 px-2 py-0.5 rounded text-stone-700">WYSIWYG</span>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-stone-300/80 overflow-hidden shadow-lg flex flex-col max-w-sm mx-auto">
+                  
+                  {/* Photo Preview */}
+                  <div class="relative aspect-[3/4] bg-stone-100 overflow-hidden">
+                    <img 
+                      src={product.image || 'assets/placeholder.svg'} 
+                      alt={product.name || 'Apparel Preview'}
+                      class="w-full h-full object-cover"
+                    />
+                    <div class="absolute top-3 left-3 flex flex-col gap-1.5">
+                      <span class="px-2.5 py-1 rounded-full bg-white/95 text-[10px] font-bold uppercase tracking-wider text-stone-800 shadow-sm">
+                        {product.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Body Preview */}
+                  <div class="p-5 space-y-3">
+                    <h4 class="font-serif text-base font-semibold text-stone-900 line-clamp-1">
+                      {product.name || 'Untitled Apparel Product'}
+                    </h4>
+                    <p class="font-serif text-base font-bold text-amber-900">
+                      {formatLKR(product.price)}
+                    </p>
+                    <p class="text-xs text-stone-500 line-clamp-2">
+                      {product.description || 'No material description entered yet.'}
+                    </p>
+
+                    {/* Preview Swatches */}
+                    <div class="pt-2 border-t border-stone-100 space-y-1">
+                      <span class="text-[10px] text-stone-400 uppercase font-semibold">Available Colours ({product.colours.length})</span>
+                      <div class="flex items-center gap-1.5">
+                        {product.colours.map((c, i) => (
+                          <span
+                            key={i}
+                            class="w-5 h-5 rounded-full border border-stone-300 shadow-sm"
+                            style={{ backgroundColor: c.hex }}
+                            title={c.name}></span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Preview Sizes */}
+                    <div class="pt-1 space-y-1">
+                      <span class="text-[10px] text-stone-400 uppercase font-semibold">Available Sizes ({product.sizes.length})</span>
+                      <div class="flex flex-wrap gap-1">
+                        {product.sizes.map((s) => (
+                          <span key={s} class="px-2 py-0.5 rounded bg-stone-100 text-[10px] font-bold text-stone-700">
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div class="pt-3">
+                      <div class="w-full py-2.5 rounded-xl bg-stone-900 text-white text-center text-xs font-semibold tracking-wider uppercase opacity-90">
+                        + Add to Bag Preview
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+
+          </main>
+
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<ProductEditorApp />);
+  </script>
+</body>
+</html>

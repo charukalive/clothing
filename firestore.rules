@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.email == 'admin@araliyaatelier.lk' ||
+        request.auth.token.role == 'administrator'
+      );
+    }
+
+    // 1. Dual-Projection: Public Apparel Catalogue (Sanitized, NO cost price)
+    match /publicProducts/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // 2. Private Master Products (Includes cost price, tailoring suppliers, margins)
+    match /products/{productId} {
+      allow read, write: if isAdmin();
+    }
+
+    // 3. Orders Collection
+    match /orders/{orderId} {
+      // Storefront order tracking: anyone with the matching private access token can read
+      allow get: if isAdmin() || (
+        resource.data.accessToken == request.auth.uid ||
+        resource.data.accessToken == request.headers.token
+      );
+      
+      // Admin can list all orders
+      allow list: if isAdmin();
+
+      // Guest order submission validation
+      allow create: if request.resource.data.keys().hasAll([
+        'orderId', 'accessToken', 'customer', 'items', 'total', 'status'
+      ]) && request.resource.data.status == 'pending';
+
+      // Updates and cancellations require admin privileges
+      allow update, delete: if isAdmin();
+    }
+
+    // 4. Idempotency Keys (guards against network double-submits)
+    match /idempotencyKeys/{key} {
+      allow read: if isAdmin();
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // Artifacts / Multi-tenant path support
+    match /artifacts/{appId}/public/data {
+      match /publicProducts/{productId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+      match /products/{productId} {
+        allow read, write: if isAdmin();
+      }
+      match /orders/{orderId} {
+        allow get: if isAdmin() || resource.data.accessToken == request.headers.token;
+        allow list: if isAdmin();
+        allow create: if request.resource.data.status == 'pending';
+        allow update, delete: if isAdmin();
+      }
+    }
+  }
+}
