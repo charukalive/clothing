@@ -6,6 +6,6 @@
   <line x1="200" y1="370" x2="200" y2="450" stroke="#a89a87" stroke-width="3" stroke-linecap="round"/>
   <line x1="400" y1="370" x2="400" y2="450" stroke="#a89a87" stroke-width="3" stroke-linecap="round"/>
   <!-- Typography -->
-  <text x="300" y="520" font-family="'Cinzel', serif" font-size="22" font-weight="600" letter-spacing="4" fill="#786c5e" text-anchor="middle">ARALIYA ATELIER</text>
+  <text x="300" y="520" font-family="'Cinzel', serif" font-size="22" font-weight="600" letter-spacing="4" fill="#786c5e" text-anchor="middle">MANDARA FASHION</text>
   <text x="300" y="550" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" letter-spacing="3" fill="#a89a87" text-anchor="middle">PHOTOGRAPHY STAGING</text>
 </svg>

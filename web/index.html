@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Araliya Atelier • Ceylon Living &amp; Apparel</title>
+  <title>Mandara Fashion • Ceylon Living &amp; Apparel</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 
   <!-- Typography: Cinzel for luxury serif titles & Plus Jakarta Sans for UI -->
@@ -79,7 +79,7 @@
 
     // Store Configuration
     const BRAND = {
-      name: 'Araliya Atelier',
+      name: 'Mandara Fashion',
       tagline: 'Ceylon Living & Contemporary Apparel',
       location: 'Colombo 07, Sri Lanka',
       whatsappNumber: '94779824567',
@@ -110,7 +110,7 @@
         outOfStock: 'Sold Out',
         emptyCart: 'Your shopping bag is empty',
         continueShopping: 'Explore Collection',
-        orderSuccessTitle: 'Araliya Order Confirmed!',
+        orderSuccessTitle: 'Mandara Order Confirmed!',
         orderSuccessSubtitle: 'Ayubowan! We have received your order.',
         keepTokenSafe: 'Please keep your Order ID and Access Token to track your delivery status.',
         orderId: 'Order ID',
@@ -188,7 +188,7 @@
     // Realistic Sri Lankan Apparel Products Database Seed
     const DEFAULT_PRODUCTS = [
       {
-        id: 'PRD-CEY-001',
+        id: 'PRD-MND-001',
         name: 'The Sigiriya Relaxed Linen Shirt',
         category: 'Linen & Casual',
         price: 6500,
@@ -208,8 +208,8 @@
         featured: true
       },
       {
-        id: 'PRD-CEY-002',
-        name: 'Araliya Silk-Touch Resort Wrap Dress',
+        id: 'PRD-MND-002',
+        name: 'Mandara Silk-Touch Resort Wrap Dress',
         category: 'Dresses & Silks',
         price: 11800,
         cost: 4900,
@@ -227,7 +227,7 @@
         featured: true
       },
       {
-        id: 'PRD-CEY-003',
+        id: 'PRD-MND-003',
         name: 'Bentota Heavyweight Organic Cotton Tee',
         category: 'Linen & Casual',
         price: 3900,
@@ -247,7 +247,7 @@
         featured: false
       },
       {
-        id: 'PRD-CEY-004',
+        id: 'PRD-MND-004',
         name: 'Galle Fort Tailored Pleated Chino Pants',
         category: 'Men\'s Collection',
         price: 8200,
@@ -267,7 +267,7 @@
         featured: true
       },
       {
-        id: 'PRD-CEY-005',
+        id: 'PRD-MND-005',
         name: 'Mirissa Tiered Linen Midi Sundress',
         category: 'Women\'s Resort',
         price: 9400,
@@ -286,7 +286,7 @@
         featured: false
       },
       {
-        id: 'PRD-CEY-006',
+        id: 'PRD-MND-006',
         name: 'Kandy Heritage Embroidered Kurta Tunic',
         category: 'Men\'s Collection',
         price: 7600,
@@ -305,7 +305,7 @@
         featured: false
       },
       {
-        id: 'PRD-CEY-007',
+        id: 'PRD-MND-007',
         name: 'Horton Plains Heavyweight Oversized Hoodie',
         category: 'Linen & Casual',
         price: 8900,
@@ -324,7 +324,7 @@
         featured: false
       },
       {
-        id: 'PRD-CEY-008',
+        id: 'PRD-MND-008',
         name: 'Handloom Artisan Market Tote & Visor Set',
         category: 'Accessories',
         price: 4200,
@@ -348,7 +348,6 @@
       let sizes = Array.isArray(product.sizes) && product.sizes.length > 0 ? product.sizes : [];
       let colours = Array.isArray(product.colours) && product.colours.length > 0 ? product.colours : [];
 
-      // If sizes missing, infer from title or default to S, M, L, XL
       if (sizes.length === 0) {
         const title = product.name || '';
         const sizeMatch = title.match(/\b(XS|S|M|L|XL|XXL|Free Size|\d{2})\b/i);
@@ -359,7 +358,6 @@
         }
       }
 
-      // If colours missing, infer or provide classic Ceylon neutrals
       if (colours.length === 0) {
         colours = [
           { name: 'White Sand', hex: '#F8F9FA' },
@@ -373,20 +371,21 @@
     // Unified Data & Storage Service (Dual Projection Architecture with Instant Local Fallback)
     const DataService = {
       init() {
-        const existing = localStorage.getItem('araliya_products');
+        const existing = localStorage.getItem('mandara_products') || localStorage.getItem('araliya_products');
         if (!existing) {
-          localStorage.setItem('araliya_products', JSON.stringify(DEFAULT_PRODUCTS));
-          // Dual projection public catalog (excludes cost price)
+          localStorage.setItem('mandara_products', JSON.stringify(DEFAULT_PRODUCTS));
           const publicCatalog = DEFAULT_PRODUCTS.map(p => {
             const { cost, ...pub } = p;
             return pub;
           });
-          localStorage.setItem('araliya_public_products', JSON.stringify(publicCatalog));
+          localStorage.setItem('mandara_public_products', JSON.stringify(publicCatalog));
+        } else if (!localStorage.getItem('mandara_products')) {
+          localStorage.setItem('mandara_products', existing);
         }
       },
       getPublicProducts() {
         try {
-          const raw = localStorage.getItem('araliya_public_products') || localStorage.getItem('araliya_products');
+          const raw = localStorage.getItem('mandara_public_products') || localStorage.getItem('mandara_products') || localStorage.getItem('araliya_public_products');
           const list = raw ? JSON.parse(raw) : DEFAULT_PRODUCTS;
           return list.filter(p => p.published && !p.archived);
         } catch (e) {
@@ -396,7 +395,7 @@
       },
       getOrders() {
         try {
-          const raw = localStorage.getItem('araliya_orders');
+          const raw = localStorage.getItem('mandara_orders') || localStorage.getItem('araliya_orders');
           return raw ? JSON.parse(raw) : [];
         } catch (e) {
           return [];
@@ -405,7 +404,7 @@
       createOrder(orderData) {
         const orders = this.getOrders();
         orders.unshift(orderData);
-        localStorage.setItem('araliya_orders', JSON.stringify(orders));
+        localStorage.setItem('mandara_orders', JSON.stringify(orders));
         window.dispatchEvent(new Event('storage'));
         return orderData;
       },
@@ -423,7 +422,7 @@
 
     // MAIN COMPONENT
     function StorefrontApp() {
-      const [lang, setLang] = useState(() => localStorage.getItem('araliya_lang') || 'en');
+      const [lang, setLang] = useState(() => localStorage.getItem('mandara_lang') || localStorage.getItem('araliya_lang') || 'en');
       const t = I18N[lang] || I18N.en;
 
       // Products & Filter state
@@ -446,7 +445,7 @@
       // Cart State
       const [cart, setCart] = useState(() => {
         try {
-          const saved = localStorage.getItem('araliya_cart');
+          const saved = localStorage.getItem('mandara_cart') || localStorage.getItem('araliya_cart');
           return saved ? JSON.parse(saved) : [];
         } catch (e) {
           return [];
@@ -474,11 +473,11 @@
 
       // Save language & cart to storage
       useEffect(() => {
-        localStorage.setItem('araliya_lang', lang);
+        localStorage.setItem('mandara_lang', lang);
       }, [lang]);
 
       useEffect(() => {
-        localStorage.setItem('araliya_cart', JSON.stringify(cart));
+        localStorage.setItem('mandara_cart', JSON.stringify(cart));
       }, [cart]);
 
       // Cross-window update listener
@@ -562,25 +561,21 @@
         const hasColor = sel.colour || (colours.length === 1 && colours[0]);
 
         if (!hasSize || !hasColor) {
-          // Open Variant Selection Modal
           setVariantTargetProduct(product);
           setVariantTargetAction(actionType);
           setModalSelectedSize(sel.size || (sizes.length === 1 ? sizes[0] : ''));
           setModalSelectedColor(sel.colour || (colours.length === 1 ? colours[0] : null));
           setIsVariantModalOpen(true);
         } else {
-          // Proceed directly
           executeAction(product, actionType, sel.size || sizes[0], sel.colour || colours[0]);
         }
       };
 
       const executeAction = (product, actionType, size, colour) => {
         if (actionType === 'cart') {
-          // Add to cart
           addToCart(product, size, colour);
           setIsCartOpen(true);
         } else if (actionType === 'whatsapp') {
-          // Trigger 1-Click WhatsApp Direct Order
           const text = encodeURIComponent(
             `*New Order Inquiry • ${BRAND.name}*\n` +
             `━━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -603,7 +598,6 @@
         const finalSize = modalSelectedSize || sizes[0];
         const finalColor = modalSelectedColor || colours[0];
 
-        // Save selection on card
         setCardSelections(prev => ({
           ...prev,
           [variantTargetProduct.id]: { size: finalSize, colour: finalColor }
@@ -679,7 +673,6 @@
         e.preventDefault();
         if (cart.length === 0) return;
 
-        // Idempotency token & order identifiers
         const timestamp = Date.now();
         const randId = Math.floor(1000 + Math.random() * 9000);
         const orderId = `ORD-${timestamp.toString().slice(-4)}${randId}`;
@@ -702,7 +695,7 @@
           deliveryFee,
           total: cartTotal,
           paymentMethod: checkoutForm.paymentMethod,
-          status: 'pending', // pending -> confirmed -> packing -> dispatched -> delivered
+          status: 'pending',
           courier: 'Pronto Logistics Sri Lanka',
           trackingNumber: `PRN-LK-${randId}`,
           createdAt: new Date().toISOString()
@@ -710,7 +703,6 @@
 
         DataService.createOrder(newOrder);
 
-        // Clear cart & show success screen
         setCart([]);
         setIsCartOpen(false);
         setIsCheckoutOpen(false);
@@ -730,7 +722,6 @@
         }
       };
 
-      // 5-step status progression mapping
       const trackingSteps = [
         { key: 'pending', label: 'Order Placed', desc: 'Received at Colombo Atelier' },
         { key: 'confirmed', label: 'Confirmed', desc: 'Verified & Tailoring Assigned' },
@@ -765,7 +756,7 @@
               {/* Brand Logo */}
               <div class="flex items-center space-x-3">
                 <a href="index.html" class="flex items-center group">
-                  <img src="assets/logo.svg" alt="Araliya Atelier" class="h-12 w-auto transition-transform group-hover:scale-[1.02]"/>
+                  <img src="assets/logo.svg" alt="Mandara Fashion" class="h-12 w-auto transition-transform group-hover:scale-[1.02]"/>
                 </a>
               </div>
 
@@ -907,7 +898,7 @@
                   />
                 </div>
                 <div class="absolute -bottom-4 -left-4 bg-white/95 backdrop-blur-md p-4 rounded-xl shadow-lg border border-stone-200/80 max-w-[200px]">
-                  <p class="text-[11px] font-serif font-bold text-stone-900 uppercase tracking-wider">Araliya Atelier</p>
+                  <p class="text-[11px] font-serif font-bold text-stone-900 uppercase tracking-wider">Mandara Fashion</p>
                   <p class="text-[10px] text-stone-500 mt-0.5">Signature 180 GSM Pure Organic Linen</p>
                 </div>
               </div>
@@ -1121,7 +1112,7 @@
           <footer class="bg-stone-900 text-stone-400 py-12 border-t border-stone-800 text-xs">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
               <div class="space-y-3">
-                <h4 class="font-serif text-base text-stone-100 font-bold uppercase tracking-wider">Araliya Atelier</h4>
+                <h4 class="font-serif text-base text-stone-100 font-bold uppercase tracking-wider">Mandara Fashion</h4>
                 <p class="leading-relaxed text-stone-400">
                   Ceylon Living &amp; Contemporary Apparel. Handcrafted in Colombo with sustainable pure organic linen, artisanal handlooms, and timeless island cuts.
                 </p>
@@ -1145,7 +1136,7 @@
               </div>
             </div>
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pt-8 border-t border-stone-800 text-center text-[11px] text-stone-500">
-              © 2026 Araliya Atelier (Pvt) Ltd. All Rights Reserved. Handcrafted in Sri Lanka.
+              © 2026 Mandara Fashion (Pvt) Ltd. All Rights Reserved. Handcrafted in Sri Lanka.
             </div>
           </footer>
 
@@ -1304,7 +1295,6 @@
                           </p>
                           <p class="font-serif text-xs font-bold text-amber-900 mt-1">{formatLKR(item.price)}</p>
                           
-                          {/* Quantity selector */}
                           <div class="flex items-center gap-2 mt-2">
                             <button
                               onClick={() => updateCartQty(index, -1)}
@@ -1348,14 +1338,12 @@
                     </div>
 
                     <div class="pt-2 space-y-2">
-                      {/* Option A: Cash on Delivery / Bank Transfer Form */}
                       <button
                         onClick={() => { setIsCartOpen(false); setIsCheckoutOpen(true); }}
                         class="w-full inline-flex items-center justify-center gap-2 bg-stone-900 hover:bg-black text-white px-4 py-3 rounded-xl text-xs font-semibold tracking-wider uppercase transition shadow min-touch">
                         <span>{t.checkoutCOD}</span>
                       </button>
 
-                      {/* Option B: 1-Click WhatsApp Direct Ordering */}
                       <button
                         onClick={triggerWhatsAppCartCheckout}
                         class="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition shadow min-touch">
@@ -1372,7 +1360,7 @@
             </div>
           )}
 
-          {/* ONLINE CHECKOUT MODAL (Cash on Delivery / Bank Transfer) */}
+          {/* ONLINE CHECKOUT MODAL */}
           {isCheckoutOpen && (
             <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
               <div class="bg-white rounded-2xl max-w-xl w-full overflow-hidden shadow-2xl border border-stone-200">
@@ -1501,7 +1489,6 @@
                     ></textarea>
                   </div>
 
-                  {/* Summary Box */}
                   <div class="bg-stone-50 p-4 rounded-xl border border-stone-200 flex justify-between items-center text-xs">
                     <div>
                       <span class="text-stone-500">Order Total ({cartCount} items):</span>
@@ -1593,7 +1580,6 @@
                 </div>
 
                 <div class="p-6 space-y-6">
-                  {/* Tracking Search Form */}
                   <form onSubmit={handleTrackLookup} class="space-y-3">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
@@ -1632,7 +1618,6 @@
                     </div>
                   )}
 
-                  {/* 5-Step Visual Stepper */}
                   {trackedOrder && (
                     <div class="space-y-6 pt-2 border-t border-stone-100">
                       
@@ -1649,7 +1634,6 @@
                         </span>
                       </div>
 
-                      {/* Visual Stepper */}
                       <div class="py-2">
                         <div class="relative flex items-center justify-between">
                           <div class="absolute left-0 top-1/2 -translate-y-1/2 h-0.5 bg-stone-200 w-full z-0"></div>
@@ -1679,7 +1663,6 @@
                         </div>
                       </div>
 
-                      {/* Order items review */}
                       <div class="border-t border-stone-100 pt-3 space-y-2">
                         <h4 class="text-xs font-semibold text-stone-700">Order Items:</h4>
                         {trackedOrder.items && trackedOrder.items.map((it, i) => (
@@ -1707,7 +1690,6 @@
       );
     }
 
-    // Render Storefront
     ReactDOM.createRoot(document.getElementById('root')).render(<StorefrontApp />);
   </script>
 </body>

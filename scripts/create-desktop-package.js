@@ -10,14 +10,14 @@ const crypto = require('crypto');
 const { execSync } = require('child_process');
 
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log('  ARALIYA ATELIER: DESKTOP STAGING PACKAGE GENERATOR');
+console.log('  MANDARA FASHION: DESKTOP STAGING PACKAGE GENERATOR');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
 // Target directory paths
 const ROOT_DIR = path.join(__dirname, '..');
 const WEB_DIR = path.join(ROOT_DIR, 'web');
 const DESKTOP_DIR = path.join(process.env.USERPROFILE || 'C:\\Users\\charu', 'Desktop');
-const ZIP_OUTPUT = path.join(DESKTOP_DIR, 'araliya-atelier-release.zip');
+const ZIP_OUTPUT = path.join(DESKTOP_DIR, 'mandara-fashion-release.zip');
 
 if (!fs.existsSync(WEB_DIR)) {
   console.error(`Error: Web source directory not found: ${WEB_DIR}`);

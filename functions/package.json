@@ -1,6 +1,6 @@
 {
-  "name": "araliya-atelier-functions",
-  "description": "Cloud Functions for Araliya Atelier Ceylon Clothing Platform",
+  "name": "mandara-fashion-functions",
+  "description": "Cloud Functions for Mandara Fashion Ceylon Clothing Platform",
   "scripts": {
     "serve": "firebase emulators:start --only functions",
     "shell": "firebase functions:shell",

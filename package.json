@@ -1,7 +1,7 @@
 {
-  "name": "araliya-atelier-clothing",
+  "name": "mandara-fashion",
   "version": "1.0.0",
-  "description": "Araliya Atelier - Modern Sri Lankan Luxury Apparel E-Commerce Platform",
+  "description": "Mandara Fashion - Modern Sri Lankan Luxury Apparel E-Commerce Platform",
   "scripts": {
     "test:babel": "node scripts/test-babel-admin.js",
     "test:ux": "node scripts/verify-ux-clothing.js",
@@ -15,6 +15,7 @@
   "keywords": [
     "clothing",
     "sri-lanka",
+    "mandara-fashion",
     "apparel",
     "e-commerce",
     "linen",

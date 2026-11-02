@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Araliya Atelier • Administrator Portal</title>
+  <title>Mandara Fashion • Administrator Portal</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 
   <!-- Typography -->
@@ -91,7 +91,7 @@
         },
         items: [
           {
-            id: 'PRD-CEY-001',
+            id: 'PRD-MND-001',
             name: 'The Sigiriya Relaxed Linen Shirt',
             price: 6500,
             quantity: 2,
@@ -99,7 +99,7 @@
             colour: { name: 'Olive Grove', hex: '#4B5320' }
           },
           {
-            id: 'PRD-CEY-004',
+            id: 'PRD-MND-004',
             name: 'Galle Fort Tailored Pleated Chino Pants',
             price: 8200,
             quantity: 1,
@@ -129,8 +129,8 @@
         },
         items: [
           {
-            id: 'PRD-CEY-002',
-            name: 'Araliya Silk-Touch Resort Wrap Dress',
+            id: 'PRD-MND-002',
+            name: 'Mandara Silk-Touch Resort Wrap Dress',
             price: 11800,
             quantity: 1,
             size: 'M',
@@ -159,7 +159,7 @@
         },
         items: [
           {
-            id: 'PRD-CEY-003',
+            id: 'PRD-MND-003',
             name: 'Bentota Heavyweight Organic Cotton Tee',
             price: 3900,
             quantity: 1,
@@ -179,38 +179,31 @@
     ];
 
     function AdminApp() {
-      // Auth state (Admin PIN or Token)
       const [isAuthenticated, setIsAuthenticated] = useState(() => {
-        return localStorage.getItem('araliya_admin_auth') === 'true';
+        return localStorage.getItem('mandara_admin_auth') === 'true' || localStorage.getItem('araliya_admin_auth') === 'true';
       });
       const [pinInput, setPinInput] = useState('');
       const [authError, setAuthError] = useState('');
 
-      // Active Section: 'dashboard' | 'orders' | 'inventory'
       const [activeTab, setActiveTab] = useState('orders');
 
-      // Orders & Products
       const [orders, setOrders] = useState([]);
       const [products, setProducts] = useState([]);
       const [selectedOrder, setSelectedOrder] = useState(null);
       const [orderFilter, setOrderFilter] = useState('all');
       const [searchQuery, setSearchQuery] = useState('');
 
-      // Status change & courier modal
       const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
       const [modalStatus, setModalStatus] = useState('pending');
       const [modalCourier, setModalCourier] = useState('Pronto Logistics');
       const [modalTracking, setModalTracking] = useState('');
 
-      // Packing slip printable preview
       const [packingSlipOrder, setPackingSlipOrder] = useState(null);
 
-      // Load data
       const refreshData = () => {
-        // Load orders
-        const rawOrders = localStorage.getItem('araliya_orders');
+        const rawOrders = localStorage.getItem('mandara_orders') || localStorage.getItem('araliya_orders');
         if (!rawOrders) {
-          localStorage.setItem('araliya_orders', JSON.stringify(SEED_ORDERS));
+          localStorage.setItem('mandara_orders', JSON.stringify(SEED_ORDERS));
           setOrders(SEED_ORDERS);
         } else {
           try {
@@ -220,8 +213,7 @@
           }
         }
 
-        // Load products
-        const rawProducts = localStorage.getItem('araliya_products');
+        const rawProducts = localStorage.getItem('mandara_products') || localStorage.getItem('araliya_products');
         if (rawProducts) {
           try {
             setProducts(JSON.parse(rawProducts));
@@ -235,10 +227,9 @@
         refreshData();
       }, []);
 
-      // Cross-window sync with standalone Product Editor!
       useEffect(() => {
         const handleSync = (e) => {
-          if (e.type === 'storage' && (e.key === 'araliya_products' || e.key === 'araliya_orders')) {
+          if (e.type === 'storage' && (e.key === 'mandara_products' || e.key === 'mandara_orders' || e.key === 'araliya_products')) {
             refreshData();
           }
           if (e.data && (e.data.type === 'PRODUCT_SAVED' || e.data.type === 'INVENTORY_UPDATED')) {
@@ -254,7 +245,6 @@
         };
       }, []);
 
-      // Metrics Calculations
       const metrics = useMemo(() => {
         const grossSales = orders.reduce((sum, o) => sum + (o.status !== 'cancelled' ? o.total : 0), 0);
         const pendingCount = orders.filter(o => o.status === 'pending').length;
@@ -264,7 +254,6 @@
         return { grossSales, pendingCount, dispatchedCount, lowStockCount };
       }, [orders, products]);
 
-      // Filtered orders
       const filteredOrders = useMemo(() => {
         return orders.filter(o => {
           const matchStatus = orderFilter === 'all' || o.status === orderFilter;
@@ -277,13 +266,11 @@
         });
       }, [orders, orderFilter, searchQuery]);
 
-      // Authentication Handler
       const handleLogin = (e) => {
         e.preventDefault();
-        // Support standard master PIN '1234' or 'admin'
-        if (pinInput === '1234' || pinInput === 'admin' || pinInput === 'araliya2026') {
+        if (pinInput === '1234' || pinInput === 'admin' || pinInput === 'mandara2026') {
           setIsAuthenticated(true);
-          localStorage.setItem('araliya_admin_auth', 'true');
+          localStorage.setItem('mandara_admin_auth', 'true');
           setAuthError('');
         } else {
           setAuthError('Invalid administrator credentials. (Hint: use 1234)');
@@ -292,10 +279,10 @@
 
       const handleLogout = () => {
         setIsAuthenticated(false);
+        localStorage.removeItem('mandara_admin_auth');
         localStorage.removeItem('araliya_admin_auth');
       };
 
-      // Order Status Mutation
       const saveOrderStatus = () => {
         if (!selectedOrder) return;
         const updated = orders.map(o => {
@@ -311,7 +298,7 @@
         });
 
         setOrders(updated);
-        localStorage.setItem('araliya_orders', JSON.stringify(updated));
+        localStorage.setItem('mandara_orders', JSON.stringify(updated));
         setIsStatusModalOpen(false);
         setSelectedOrder(prev => ({
           ...prev,
@@ -321,7 +308,6 @@
         }));
       };
 
-      // Toggle Product Status (Published / Draft / Archived)
       const toggleProductPublish = (productId) => {
         const updated = products.map(p => {
           if (p.id === productId) {
@@ -330,17 +316,15 @@
           return p;
         });
         setProducts(updated);
-        localStorage.setItem('araliya_products', JSON.stringify(updated));
-        // Update public catalog projection
+        localStorage.setItem('mandara_products', JSON.stringify(updated));
         const publicCatalog = updated.filter(p => p.published && !p.archived).map(p => {
           const { cost, ...pub } = p;
           return pub;
         });
-        localStorage.setItem('araliya_public_products', JSON.stringify(publicCatalog));
+        localStorage.setItem('mandara_public_products', JSON.stringify(publicCatalog));
         window.dispatchEvent(new Event('storage'));
       };
 
-      // WhatsApp Customer Dispatch Message
       const openWhatsAppCustomer = (order) => {
         const phone = order.customer.phone.replace(/[^0-9]/g, '');
         const validPhone = phone.startsWith('0') ? '94' + phone.substring(1) : phone;
@@ -354,7 +338,7 @@
 
         const msg = encodeURIComponent(
           `*Ayubowan ${order.customer.name}!* \n\n` +
-          `This is Araliya Atelier (Colombo 07). Your order *#${order.orderId}* ${statusText}\n\n` +
+          `This is Mandara Fashion (Colombo 07). Your order *#${order.orderId}* ${statusText}\n\n` +
           `• Total Amount: ${formatLKR(order.total)} (${order.paymentMethod})\n` +
           `• Delivery City: ${order.customer.city}\n\n` +
           `Track live status anytime at: ${window.location.origin}/index.html (Access Token: ${order.accessToken})\n\n` +
@@ -364,12 +348,10 @@
         window.open(`https://wa.me/${validPhone}?text=${msg}`, '_blank');
       };
 
-      // Open Standalone Product Editor in separate browser tab/window!
       const openProductEditor = (productId) => {
         window.open(`product-editor.html?id=${productId}`, '_blank', 'width=1100,height=850');
       };
 
-      // Print shipping slip
       const triggerPrintPackingSlip = (order) => {
         setPackingSlipOrder(order);
         setTimeout(() => {
@@ -377,7 +359,6 @@
         }, 300);
       };
 
-      // Export Orders CSV
       const exportOrdersCSV = () => {
         let csv = 'Order ID,Date,Customer Name,Phone,City,Total (LKR),Payment Method,Status\n';
         orders.forEach(o => {
@@ -387,18 +368,17 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `araliya-orders-${new Date().toISOString().slice(0, 10)}.csv`;
+        a.download = `mandara-orders-${new Date().toISOString().slice(0, 10)}.csv`;
         a.click();
       };
 
-      // LOGIN FORM IF NOT AUTHENTICATED
       if (!isAuthenticated) {
         return (
           <div class="min-h-screen bg-stone-900 flex items-center justify-center p-4">
             <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl border border-stone-800 text-center space-y-6">
               
               <div class="space-y-2">
-                <img src="assets/logo.svg" alt="Araliya Atelier" class="h-12 mx-auto"/>
+                <img src="assets/logo.svg" alt="Mandara Fashion" class="h-12 mx-auto"/>
                 <p class="text-xs uppercase tracking-widest text-amber-800 font-bold pt-2">Management &amp; Dispatch Portal</p>
               </div>
 
@@ -447,12 +427,11 @@
               
               <div class="flex items-center space-x-4">
                 <a href="admin.html" class="flex items-center gap-2">
-                  <span class="font-serif text-lg font-bold tracking-wider text-amber-400">ARALIYA</span>
+                  <span class="font-serif text-lg font-bold tracking-wider text-amber-400">MANDARA</span>
                   <span class="text-xs text-stone-400 uppercase tracking-widest border-l border-stone-700 pl-2">Admin Portal</span>
                 </a>
               </div>
 
-              {/* Navigation links */}
               <div class="hidden md:flex items-center gap-1 bg-stone-800 p-1 rounded-xl">
                 <button
                   onClick={() => setActiveTab('orders')}
@@ -470,7 +449,6 @@
                 </button>
               </div>
 
-              {/* Action Buttons */}
               <div class="flex items-center gap-3">
                 <button
                   onClick={() => openProductEditor('new')}
@@ -504,10 +482,8 @@
             </div>
           </header>
 
-          {/* Main Dashboard Container */}
           <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow w-full space-y-8">
             
-            {/* Metrics Overview Cards */}
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div class="bg-white p-5 rounded-2xl border border-stone-200/80 shadow-sm space-y-1">
                 <span class="text-xs uppercase tracking-wider text-stone-500 font-semibold">Gross Sales</span>
@@ -534,7 +510,6 @@
               </div>
             </div>
 
-            {/* Mobile Tab Switcher */}
             <div class="md:hidden flex rounded-xl bg-stone-200 p-1">
               <button
                 onClick={() => setActiveTab('orders')}
@@ -552,7 +527,6 @@
             {activeTab === 'orders' && (
               <div class="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
                 
-                {/* Orders Header & Filter Controls */}
                 <div class="p-5 border-b border-stone-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <h2 class="font-serif text-xl font-bold text-stone-900">Sri Lanka Order Pipeline</h2>
@@ -560,7 +534,6 @@
                   </div>
 
                   <div class="flex flex-wrap items-center gap-3">
-                    {/* Status Tabs */}
                     <div class="flex items-center gap-1 bg-stone-100 p-1 rounded-xl text-xs font-semibold">
                       {['all', 'pending', 'confirmed', 'packing', 'dispatched', 'completed'].map(st => (
                         <button
@@ -585,7 +558,6 @@
                   </div>
                 </div>
 
-                {/* Orders Table */}
                 <div class="overflow-x-auto">
                   <table class="w-full text-left text-xs text-stone-600">
                     <thead class="bg-stone-50 text-stone-700 uppercase tracking-wider font-semibold border-b border-stone-200">
@@ -666,7 +638,6 @@
 
                             <td class="p-4 text-right">
                               <div class="flex items-center justify-end gap-1.5">
-                                {/* Update Status */}
                                 <button
                                   onClick={() => {
                                     setSelectedOrder(order);
@@ -680,7 +651,6 @@
                                   Update
                                 </button>
 
-                                {/* WhatsApp Customer */}
                                 <button
                                   onClick={() => openWhatsAppCustomer(order)}
                                   class="p-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 min-touch flex items-center justify-center"
@@ -690,7 +660,6 @@
                                   </svg>
                                 </button>
 
-                                {/* Print Packing Slip */}
                                 <button
                                   onClick={() => triggerPrintPackingSlip(order)}
                                   class="p-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700 min-touch flex items-center justify-center"
@@ -904,7 +873,7 @@
             <div id="printable-slip" class="hidden print:block text-black font-sans p-8 space-y-6">
               <div class="flex justify-between items-start border-b-2 border-stone-800 pb-4">
                 <div>
-                  <h1 class="font-serif text-3xl font-bold tracking-wider">ARALIYA ATELIER</h1>
+                  <h1 class="font-serif text-3xl font-bold tracking-wider">MANDARA FASHION</h1>
                   <p class="text-xs uppercase tracking-widest text-stone-600 mt-1">Ceylon Living &amp; Contemporary Apparel • Colombo 07, Sri Lanka</p>
                 </div>
                 <div class="text-right">
@@ -976,7 +945,7 @@
               </div>
 
               <div class="border-t border-stone-300 pt-6 text-center text-xs text-stone-500">
-                <p>Thank you for choosing Araliya Atelier Ceylon. For exchanges within 7 days, contact concierge at +94 77 982 4567.</p>
+                <p>Thank you for choosing Mandara Fashion Ceylon. For exchanges within 7 days, contact concierge at +94 77 982 4567.</p>
               </div>
             </div>
           )}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Araliya Atelier • Apparel Product Studio</title>
+  <title>Mandara Fashion • Apparel Product Studio</title>
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
 
   <!-- Typography -->
@@ -74,7 +74,6 @@
     };
 
     function ProductEditorApp() {
-      // Parse query param ?id=
       const urlParams = new URLSearchParams(window.location.search);
       const productIdParam = urlParams.get('id') || 'new';
 
@@ -84,9 +83,8 @@
       const [customColorName, setCustomColorName] = useState('');
       const [customColorHex, setCustomColorHex] = useState('#b45309');
 
-      // Product Form State
       const [product, setProduct] = useState({
-        id: productIdParam === 'new' ? `PRD-CEY-${Math.floor(100 + Math.random() * 900)}` : productIdParam,
+        id: productIdParam === 'new' ? `PRD-MND-${Math.floor(100 + Math.random() * 900)}` : productIdParam,
         name: '',
         category: 'Linen & Casual',
         price: 6500,
@@ -104,11 +102,10 @@
         featured: false
       });
 
-      // Load existing product if editing
       useEffect(() => {
         if (productIdParam !== 'new') {
           try {
-            const raw = localStorage.getItem('araliya_products');
+            const raw = localStorage.getItem('mandara_products') || localStorage.getItem('araliya_products');
             if (raw) {
               const list = JSON.parse(raw);
               const found = list.find(p => p.id === productIdParam);
@@ -126,7 +123,6 @@
         }
       }, [productIdParam]);
 
-      // Warn before unload if changes are unsaved
       useEffect(() => {
         const handleBeforeUnload = (e) => {
           if (isDirty) {
@@ -144,7 +140,6 @@
         setProduct(prev => ({ ...prev, [field]: value }));
       };
 
-      // Toggle Size
       const toggleSize = (size) => {
         setIsDirty(true);
         setProduct(prev => {
@@ -159,7 +154,6 @@
         });
       };
 
-      // Add Custom Size Tag
       const addCustomSize = (e) => {
         e.preventDefault();
         const trimmed = customSizeInput.trim().toUpperCase();
@@ -173,7 +167,6 @@
         }
       };
 
-      // Toggle Colour
       const toggleColor = (c) => {
         setIsDirty(true);
         setProduct(prev => {
@@ -188,7 +181,6 @@
         });
       };
 
-      // Add Custom Colour Tag
       const addCustomColor = (e) => {
         e.preventDefault();
         const trimmed = customColorName.trim();
@@ -202,7 +194,6 @@
         }
       };
 
-      // Image upload / file picker
       const handleImageFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -218,10 +209,9 @@
         }
       };
 
-      // Save product (Dual Projection: writes private products & public publicProducts)
       const saveProduct = (andClose = false) => {
         try {
-          const raw = localStorage.getItem('araliya_products') || '[]';
+          const raw = localStorage.getItem('mandara_products') || localStorage.getItem('araliya_products') || '[]';
           let list = JSON.parse(raw);
           const index = list.findIndex(p => p.id === product.id);
 
@@ -239,17 +229,14 @@
             list.unshift(fullProduct);
           }
 
-          // 1. Private Store
-          localStorage.setItem('araliya_products', JSON.stringify(list));
+          localStorage.setItem('mandara_products', JSON.stringify(list));
 
-          // 2. Dual-Projection Public Store (strips cost and internal fields)
           const publicCatalog = list.filter(p => p.published && !p.archived).map(p => {
             const { cost, ...pub } = p;
             return pub;
           });
-          localStorage.setItem('araliya_public_products', JSON.stringify(publicCatalog));
+          localStorage.setItem('mandara_public_products', JSON.stringify(publicCatalog));
 
-          // 3. Cross-window notification
           if (window.opener) {
             try {
               window.opener.postMessage({ type: 'PRODUCT_SAVED', productId: fullProduct.id }, '*');
@@ -282,7 +269,7 @@
           <header class="bg-stone-900 text-white border-b border-stone-800 sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 h-18 py-3 flex items-center justify-between gap-4">
               <div class="flex items-center space-x-3">
-                <span class="font-serif text-lg font-bold text-amber-400">ARALIYA</span>
+                <span class="font-serif text-lg font-bold text-amber-400">MANDARA</span>
                 <span class="text-xs uppercase tracking-widest text-stone-400 border-l border-stone-700 pl-3">
                   Apparel Studio • {productIdParam === 'new' ? 'New Creation' : product.id}
                 </span>
@@ -321,7 +308,6 @@
             {/* Left Column: Form Controls (7 cols) */}
             <div class="lg:col-span-7 space-y-6">
               
-              {/* Core Details Card */}
               <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-4">
                 <h3 class="font-serif text-base font-bold text-stone-900">Apparel Information</h3>
                 
@@ -375,7 +361,6 @@
                 </div>
               </div>
 
-              {/* Pricing & Stock Levels */}
               <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-4">
                 <h3 class="font-serif text-base font-bold text-stone-900">Pricing &amp; Atelier Inventory</h3>
                 
@@ -426,14 +411,12 @@
                 </div>
               </div>
 
-              {/* Clothing Sizes Management */}
               <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-4">
                 <div class="flex justify-between items-center">
                   <h3 class="font-serif text-base font-bold text-stone-900">Apparel Sizes</h3>
                   <span class="text-xs text-stone-500">{product.sizes.length} active sizes</span>
                 </div>
 
-                {/* Preset Chips */}
                 <div class="flex flex-wrap gap-2">
                   {PRESET_SIZES.map(s => {
                     const isSel = product.sizes.includes(s);
@@ -454,7 +437,6 @@
                   })}
                 </div>
 
-                {/* Custom Size Tag Input */}
                 <form onSubmit={addCustomSize} class="flex gap-2 pt-2">
                   <input
                     type="text"
@@ -471,14 +453,12 @@
                 </form>
               </div>
 
-              {/* Colour Swatch Palette Management */}
               <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-4">
                 <div class="flex justify-between items-center">
                   <h3 class="font-serif text-base font-bold text-stone-900">Colour Swatches</h3>
                   <span class="text-xs text-stone-500">{product.colours.length} active colours</span>
                 </div>
 
-                {/* Preset Colour Swatches */}
                 <div class="flex flex-wrap gap-2.5">
                   {PRESET_COLOURS.map(c => {
                     const isSel = product.colours.some(col => col.name === c.name);
@@ -500,7 +480,6 @@
                   })}
                 </div>
 
-                {/* Custom Colour Tag Input */}
                 <form onSubmit={addCustomColor} class="flex flex-wrap sm:flex-nowrap gap-2 pt-2 items-center">
                   <input
                     type="color"
@@ -523,7 +502,6 @@
                 </form>
               </div>
 
-              {/* Publication Status & Safety */}
               <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-3">
                 <h3 class="font-serif text-base font-bold text-stone-900">Visibility &amp; Safety Controls</h3>
                 
@@ -555,7 +533,6 @@
             {/* Right Column: Live Storefront Preview & Image Upload (5 cols) */}
             <div class="lg:col-span-5 space-y-6">
               
-              {/* Image Upload Box */}
               <div class="bg-white p-6 rounded-2xl border border-stone-200/90 shadow-sm space-y-4">
                 <h3 class="font-serif text-base font-bold text-stone-900">Apparel Photography</h3>
                 
@@ -593,7 +570,6 @@
 
                 <div class="bg-white rounded-2xl border border-stone-300/80 overflow-hidden shadow-lg flex flex-col max-w-sm mx-auto">
                   
-                  {/* Photo Preview */}
                   <div class="relative aspect-[3/4] bg-stone-100 overflow-hidden">
                     <img 
                       src={product.image || 'assets/placeholder.svg'} 
@@ -607,7 +583,6 @@
                     </div>
                   </div>
 
-                  {/* Body Preview */}
                   <div class="p-5 space-y-3">
                     <h4 class="font-serif text-base font-semibold text-stone-900 line-clamp-1">
                       {product.name || 'Untitled Apparel Product'}
@@ -619,7 +594,6 @@
                       {product.description || 'No material description entered yet.'}
                     </p>
 
-                    {/* Preview Swatches */}
                     <div class="pt-2 border-t border-stone-100 space-y-1">
                       <span class="text-[10px] text-stone-400 uppercase font-semibold">Available Colours ({product.colours.length})</span>
                       <div class="flex items-center gap-1.5">
@@ -633,7 +607,6 @@
                       </div>
                     </div>
 
-                    {/* Preview Sizes */}
                     <div class="pt-1 space-y-1">
                       <span class="text-[10px] text-stone-400 uppercase font-semibold">Available Sizes ({product.sizes.length})</span>
                       <div class="flex flex-wrap gap-1">

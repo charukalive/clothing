@@ -1,15 +1,15 @@
-# Araliya Atelier (අරලිය) • Ceylon Living & Contemporary Apparel
+# Mandara Fashion (මන්දාරා) • Ceylon Living & Contemporary Apparel
 
-> **Araliya Atelier** is a luxury Sri Lankan apparel and clothing boutique platform built with zero-build static architecture (`React 18`, `ReactDOM`, `Tailwind CSS`, inline SVG icons) and a resilient dual-projection Firebase backend.
+> **Mandara Fashion** is a premier Sri Lankan apparel boutique and e-commerce platform built with a high-performance zero-build static architecture (`React 18`, `ReactDOM`, `Tailwind CSS`, inline SVG icons) and a resilient dual-projection Firebase backend.
 
-![Araliya Atelier Banner](web/assets/logo.svg)
+![Mandara Fashion Banner](web/assets/logo.svg)
 
 ---
 
 ## 🌺 Brand Identity & Vision
-- **Brand Name**: **Araliya Atelier** (Inspired by the sacred, fragrant Sri Lankan temple flower, representing purity, tropical elegance, and timeless grace).
+- **Brand Name**: **Mandara Fashion** (Inspired by the mythical *Mandara* celestial bloom, representing elegance, timeless royalty, and contemporary Sri Lankan grace).
 - **Atelier Location**: 14 Guildford Crescent, Colombo 07, Western Province, Sri Lanka.
-- **Craftsmanship**: 100% pure organic Ceylon linen, handloom textiles woven on heritage wooden looms, and breathable cottons tailored for tropical island living.
+- **Craftsmanship**: 100% pure organic Ceylon linen, handloom textiles woven on heritage wooden looms, and breathable combed cottons tailored for tropical island living.
 - **Currency**: Sri Lankan Rupees (**LKR / Rs.**).
 - **Delivery**: Same-day/next-day Colombo dispatch and islandwide courier coverage across all 25 districts via **Pronto Logistics** & **Koombiyo Delivery**.
 
@@ -26,8 +26,8 @@ Zero-build portability allows instant deployment to standard static web hosts (c
 │   ├── product-editor.html     # Dedicated standalone apparel studio (opens in new window)
 │   ├── maintenance.html        # Private showcase & staging launch countdown
 │   └── assets/
-│       ├── logo.svg            # Araliya luxury brand vector logo
-│       ├── favicon.svg         # Araliya circular medallion favicon
+│       ├── logo.svg            # Mandara Fashion luxury brand vector logo
+│       ├── favicon.svg         # Mandara circular medallion favicon
 │       └── placeholder.svg     # Elegant photo staging placeholder
 ├── functions/
 │   ├── index.js                # Cloud Functions: createGuestOrder, updateOrderStatus, syncPublicProduct
@@ -125,4 +125,4 @@ npm run package
 
 ---
 
-© 2026 Araliya Atelier (Pvt) Ltd. Colombo 07, Sri Lanka. Handcrafted with Island Grace.
+© 2026 Mandara Fashion (Pvt) Ltd. Colombo 07, Sri Lanka. Handcrafted with Island Grace.

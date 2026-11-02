@@ -18,7 +18,7 @@ const htmlFiles = [
 ];
 
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log('  ARALIYA ATELIER: BABEL JSX SYNTAX PREFLIGHT TEST');
+console.log('  MANDARA FASHION: BABEL JSX SYNTAX PREFLIGHT TEST');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
 let totalScriptsChecked = 0;
@@ -32,7 +32,6 @@ htmlFiles.forEach(fileName => {
   }
 
   const content = fs.readFileSync(filePath, 'utf-8');
-  // Match <script type="text/babel">...</script>
   const scriptRegex = /<script\s+type=["']text\/babel["'][^>]*>([\s\S]*?)<\/script>/gi;
   let match;
   let scriptIndex = 1;

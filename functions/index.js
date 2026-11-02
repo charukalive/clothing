@@ -1,5 +1,5 @@
 /**
- * Cloud Functions for Araliya Atelier - Sri Lankan Luxury Clothing & Apparel Platform
+ * Cloud Functions for Mandara Fashion - Sri Lankan Luxury Clothing & Apparel Platform
  * Node.js 22 Runtime
  */
 
@@ -21,7 +21,7 @@ exports.probeEmulatorHealth = onRequest({ cors: true }, (req, res) => {
   const isEmulator = Boolean(process.env.FUNCTIONS_EMULATOR || process.env.FIRESTORE_EMULATOR_HOST);
   res.status(200).json({
     status: "healthy",
-    service: "Araliya Atelier Ceylon Backend",
+    service: "Mandara Fashion Ceylon Backend",
     isEmulator,
     timestamp: new Date().toISOString()
   });
@@ -159,10 +159,9 @@ exports.createGuestOrder = onCall({ cors: true }, async (request) => {
  * Updates order progression, assigned courier, and waybill number.
  */
 exports.updateOrderStatus = onCall({ cors: true }, async (request) => {
-  // Verify administrator claim or authorization
   const auth = request.auth;
-  if (!auth || (!auth.token.admin && auth.token.email !== "admin@araliyaatelier.lk")) {
-    throw new HttpsError("permission-denied", "Only Araliya Atelier staff may update order status.");
+  if (!auth || (!auth.token.admin && auth.token.email !== "admin@mandarafashion.lk")) {
+    throw new HttpsError("permission-denied", "Only Mandara Fashion staff may update order status.");
   }
 
   const { orderId, status, courier, trackingNumber } = request.data || {};
@@ -197,7 +196,6 @@ exports.syncPublicProduct = onDocumentWritten("products/{productId}", async (eve
 
   const publicRef = db.collection("publicProducts").doc(productId);
 
-  // If deleted or unpublished or archived, remove from public projection
   if (!afterDoc.exists) {
     await publicRef.delete();
     return;
@@ -209,7 +207,6 @@ exports.syncPublicProduct = onDocumentWritten("products/{productId}", async (eve
     return;
   }
 
-  // Project sanitized public fields only
   const sanitizedPublic = {
     id: productId,
     name: data.name,

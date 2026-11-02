@@ -10,7 +10,7 @@ const assert = require('assert');
 const WEB_DIR = path.join(__dirname, '..', 'web');
 
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-console.log('  ARALIYA ATELIER: UX & APPAREL INTEGRITY AUDIT');
+console.log('  MANDARA FASHION: UX & APPAREL INTEGRITY AUDIT');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
 let passCount = 0;
@@ -109,7 +109,7 @@ runCheck('Multi-Language system supports English, Sinhala (සිංහල), and
   assert(indexContent.includes('en: {'), 'Missing English translations');
   assert(indexContent.includes('si: {'), 'Missing Sinhala translations');
   assert(indexContent.includes('ta: {'), 'Missing Tamil translations');
-  assert(indexContent.includes('localStorage.setItem(\'araliya_lang\''), 'Missing language persistence');
+  assert(indexContent.includes('localStorage.setItem(\'mandara_lang\''), 'Missing language persistence');
 });
 
 // 12. Sri Lankan Currency & Locations
@@ -131,8 +131,15 @@ runCheck('Product editor opens in separate window and communicates via postMessa
 
 // 14. Dual Projection Architecture (products & publicProducts)
 runCheck('Dual projection architecture synchronizes private master products with public catalog', () => {
-  assert(editorContent.includes('araliya_products'), 'product-editor.html missing private products write');
-  assert(editorContent.includes('araliya_public_products'), 'product-editor.html missing publicProducts projection');
+  assert(editorContent.includes('mandara_products'), 'product-editor.html missing private products write');
+  assert(editorContent.includes('mandara_public_products'), 'product-editor.html missing publicProducts projection');
+});
+
+// 15. Rebrand Assertions (Mandara Fashion)
+runCheck('Platform successfully rebranded to Mandara Fashion across storefront and assets', () => {
+  assert(indexContent.includes('Mandara Fashion'), 'index.html does not feature Mandara Fashion');
+  assert(adminContent.includes('MANDARA'), 'admin.html does not feature MANDARA');
+  assert(editorContent.includes('MANDARA'), 'product-editor.html does not feature MANDARA');
 });
 
 console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
